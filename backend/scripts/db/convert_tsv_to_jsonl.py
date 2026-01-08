@@ -24,8 +24,8 @@ def convert_tsv_to_jsonl():
     # 1. 파일 경로 설정 (자동 감지)
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(current_dir)) # backend -> Final
-    input_path = os.path.join(project_root, "data", "perfume_info.tsv")
-    output_path = os.path.join(project_root, "data", "perfume_data.jsonl") # 확장자 .jsonl
+    input_path = os.path.join(project_root, "data", "perfume_info.tsv") # 여기에 변환할 파일명으로 입력
+    output_path = os.path.join(project_root, "data", "perfume_info.jsonl") # 확장자 .jsonl
 
     print(f"Reading file from: {input_path}")
 

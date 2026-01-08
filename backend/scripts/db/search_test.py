@@ -1,54 +1,87 @@
-import os
 import psycopg2
-from openai import OpenAI
+import openai
+import os
+from dotenv import load_dotenv
 
-# DB 설정 (위와 동일)
-DB_HOST = os.getenv("PGHOST", "localhost")
-DB_PORT = int(os.getenv("PGPORT", "5433"))
-DB_NAME = os.getenv("PGDATABASE", "scentence_db")
-DB_USER = os.getenv("PGUSER", "scentence")
-DB_PASSWORD = os.getenv("PGPASSWORD", "scentence2026!")
+load_dotenv()
+client = openai.OpenAI()
 
-MODEL = "text-embedding-3-small"
+DB_CONFIG = {
+    "dbname": "scentence_db",
+    "user": "scentence",
+    "password": "scentence",
+    "host": "localhost",
+    "port": "5433"
+}
 
-def main():
-    api_key = os.getenv("OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key)
+def get_embedding(text):
+    text = text.replace("\n", " ")
+    return client.embeddings.create(input=[text], model="text-embedding-3-small").data[0].embedding
 
-    # 테스트할 질문
-    query_text = "비 오는 날 뿌리기 좋은 차분한 숲 냄새 향수 추천해줘"
-    print(f"질문: {query_text}\n" + "="*50)
-
-    # 1. 질문을 벡터로 변환
-    q_resp = client.embeddings.create(model=MODEL, input=query_text)
-    q_emb = q_resp.data[0].embedding
-
-    conn = psycopg2.connect(
-        host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD
-    )
-    
-    # 2. 유사도 검색 쿼리 (HNSW 인덱스 활용)
-    # <=> 연산자는 코사인 거리 (값이 작을수록 유사함)
-    sql = """
-    SELECT perfume_id, brand, name, description, metadata, 
-           (embedding <=> %s::vector) as distance
-    FROM perfume_items
-    ORDER BY distance ASC
-    LIMIT 5
+def search_perfumes(user_query, filters=None, top_k=3):
     """
+    사용자 질문(user_query)과 필터(filters)를 받아 가장 유사한 향수를 찾습니다.
+    """
+    conn = psycopg2.connect(**DB_CONFIG)
+    cur = conn.cursor()
 
-    with conn.cursor() as cur:
-        cur.execute(sql, (q_emb,))
-        rows = cur.fetchall()
+    # 1. 질문을 벡터로 변환 (Query Embedding)
+    query_vector = get_embedding(user_query)
+    
+    # 2. 기본 SQL 쿼리 작성 (Cosine Distance operator: <=>)
+    # 거리가 가까울수록(수치가 작을수록) 유사한 것입니다.
+    sql = """
+        SELECT m.name, m.brand, m.top_accords, m.main_season, m.gender, 
+               (e.embedding <=> %s::vector) as distance
+        FROM perfume_embeddings e
+        JOIN perfume_metadata m ON e.perfume_id = m.id
+        WHERE 1=1
+    """
+    
+    params = [query_vector]
 
-        for i, row in enumerate(rows, 1):
-            pid, brand, name, desc, meta, dist = row
-            print(f"{i}. [{brand}] {name} (유사도 거리: {dist:.4f})")
-            print(f"   - 설명 요약: {desc[:100]}...")
-            print(f"   - 계절/상황: {meta.get('season')}, {meta.get('occasion')}")
-            print("-" * 50)
+    # 3. 하이브리드 검색: 메타데이터 필터링 적용 (SQL WHERE 절)
+    if filters:
+        if "season" in filters:
+            sql += " AND m.main_season = %s"
+            params.append(filters["season"])
+        if "gender" in filters:
+            sql += " AND m.gender = %s"
+            params.append(filters["gender"])
+            
+    # 4. 정렬 및 제한 (유사도 순)
+    sql += " ORDER BY distance ASC LIMIT %s"
+    params.append(top_k)
 
+    # 5. 실행
+    cur.execute(sql, tuple(params))
+    results = cur.fetchall()
+    
     conn.close()
+    return results
 
 if __name__ == "__main__":
-    main()
+    # === 테스트 시나리오 ===
+    
+    # 상황 1: 단순 의미 검색 (벡터만 사용)
+    # "상쾌하고 시트러스한 향수 찾아줘"
+    query1 = "I want a fresh and citrusy perfume that feels energetic."
+    print(f"\n🔎 Query 1: {query1}")
+    results = search_perfumes(query1, top_k=3)
+    
+    for r in results:
+        print(f" - [{r[1]}] {r[0]} (Season: {r[3]}, Dist: {r[5]:.4f})")
+        # 출력예: [Brand] Name (Season: Summer, Dist: 0.1234)
+
+    print("-" * 50)
+
+    # 상황 2: 하이브리드 검색 (벡터 + 필터링)
+    # "겨울에 쓸 무거운 우디 향수 추천해줘" (Winter 필터 적용)
+    query2 = "I am looking for a heavy woody scent with musk."
+    my_filters = {"season": "Winter"} # 실제로는 LLM이 추출할 정보
+    
+    print(f"\n🔎 Query 2: {query2} (Filter: {my_filters})")
+    results = search_perfumes(query2, filters=my_filters, top_k=3)
+    
+    for r in results:
+        print(f" - [{r[1]}] {r[0]} (Season: {r[3]}, Dist: {r[5]:.4f})")

@@ -1,6 +1,11 @@
 import json
 import psycopg2
 import ast
+import os  # os 모듈 추가
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_FILE_PATH = os.path.normpath(os.path.join(CURRENT_DIR, '..', '..', 'data', 'perfume_info.jsonl'))
 
 DB_CONFIG = {
     "dbname": "scentence_db",
@@ -50,7 +55,6 @@ def parse_dict_str_get_top(dict_str, top_k=1):
         if not data_dict:
             return None if top_k == 1 else []
 
-        # 투표수 기준 내림차순
         sorted_items = sorted(
             data_dict.items(), 
             key=lambda item: int(item[1]) if item[1] else 0, 
@@ -78,55 +82,57 @@ def load_data():
     create_metadata_table(cur)
     conn.commit()
     
-    print("Start loading data...")
+    print(f"Start loading data from: {DATA_FILE_PATH}")
     count = 0
     
-    with open("perfume_info.jsonl", "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                data = json.loads(line)
-                p_id = parse_perfume_id(data.get("perfume_id"))
-                if not p_id: continue
+    try:
+        with open(DATA_FILE_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    p_id = parse_perfume_id(data.get("perfume_id"))
+                    if not p_id: continue
 
-                # 1. 데이터 파싱
-                # Accords는 상위 3개 (임베딩 설명용)
-                top_accords = parse_dict_str_get_top(data.get("accord"), top_k=3)
-                
-                # 나머지(성별, 계절, 상황)는 필터링용으로 상위 1개만 추출
-                main_gender = parse_dict_str_get_top(data.get("audience"), top_k=1)
-                main_season = parse_dict_str_get_top(data.get("season"), top_k=1)
-                main_occasion = parse_dict_str_get_top(data.get("occasion"), top_k=1)
+                    # 1. 데이터 파싱
+                    top_accords = parse_dict_str_get_top(data.get("accord"), top_k=3)
+                    main_gender = parse_dict_str_get_top(data.get("audience"), top_k=1)
+                    main_season = parse_dict_str_get_top(data.get("season"), top_k=1)
+                    main_occasion = parse_dict_str_get_top(data.get("occasion"), top_k=1)
 
-                # 2. DB 적재
-                cur.execute("""
-                    INSERT INTO perfume_metadata 
-                    (id, external_id, name, brand, gender, main_season, main_occasion, 
-                     top_notes, middle_notes, base_notes, top_accords, image_url, full_data)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        main_season = EXCLUDED.main_season,
-                        image_url = EXCLUDED.image_url
-                """, (
-                    p_id,
-                    data.get("perfume_id"),
-                    data.get("perfume"),
-                    data.get("brand"),
-                    main_gender,
-                    main_season,
-                    main_occasion,
-                    data.get("top_note"),
-                    data.get("middle_note"),
-                    data.get("base_note"),
-                    ", ".join(top_accords),
-                    data.get("img"),
-                    json.dumps(data)
-                ))
-                count += 1
-                
-            except Exception as e:
-                print(f"Error processing line: {e}")
-                continue
+                    # 2. DB 적재
+                    cur.execute("""
+                        INSERT INTO perfume_metadata 
+                        (id, external_id, name, brand, gender, main_season, main_occasion, 
+                         top_notes, middle_notes, base_notes, top_accords, image_url, full_data)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            main_season = EXCLUDED.main_season,
+                            image_url = EXCLUDED.image_url
+                    """, (
+                        p_id,
+                        data.get("perfume_id"),
+                        data.get("perfume"),
+                        data.get("brand"),
+                        main_gender,
+                        main_season,
+                        main_occasion,
+                        data.get("top_note"),
+                        data.get("middle_note"),
+                        data.get("base_note"),
+                        ", ".join(top_accords) if top_accords else "",
+                        data.get("img"),
+                        json.dumps(data)
+                    ))
+                    count += 1
+                    
+                except Exception as e:
+                    print(f"Error processing line: {e}")
+                    continue
+    except FileNotFoundError:
+        print(f"Error: 파일을 찾을 수 없습니다.")
+        print(f"경로를 확인해주세요: {DATA_FILE_PATH}")
+        return
 
     conn.commit()
     cur.close()
