@@ -1,6 +1,3 @@
--- PERFUME_DB / TB_PERFUME_ACCORD_M
--- 향수별 어코드 정보 테이블
-
 CREATE TABLE TB_PERFUME_ACCORD_M (
     PERFUME_ID  BIGINT        NOT NULL,                 -- 향수ID
     ACCORD      VARCHAR(100)  NOT NULL,                 -- 어코드명

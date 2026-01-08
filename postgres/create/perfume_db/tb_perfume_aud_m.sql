@@ -1,6 +1,3 @@
--- PERFUME_DB / TB_PERFUME_AUD_M
--- 향수별 분위기/착용대상(Audience) 정보 테이블
-
 CREATE TABLE TB_PERFUME_AUD_M (
     PERFUME_ID  BIGINT        NOT NULL,
     AUDIENCE    VARCHAR(50)   NOT NULL,
