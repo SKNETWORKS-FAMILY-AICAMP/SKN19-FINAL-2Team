@@ -1,17 +1,27 @@
 # schemas.py
+from typing import List, Any, Optional
 from typing_extensions import TypedDict, Literal
 from pydantic import BaseModel, Field
 
-
-# main_v3.py의 State
+# LangGraph 상태 (State)
 class State(TypedDict):
     user_query: str
-    route: Literal["interviewer", "researcher", "writer"]
-    clarified_query: str | None
-    research_result: str | None
+    messages: List[Any]  # 대화 히스토리 (Supervisor 판단용)
+    
+    # 라우팅 및 인터뷰 정보
+    route: Literal["interviewer", "researcher", "writer", "end"]
+    interview_context: str  # 누적된 사용자 취향 정보 (예: "계절: 겨울, 노트: 우디")
+    missing_info: str       # (Optional) Supervisor가 판단한 부족한 정보
+    
+    # 검색 전략 및 결과
+    search_plans: List[dict] # Researcher가 수립한 전략 리스트
+    search_logs: List[str]   # 실행 로그 (프론트엔드 전송용)
+    research_result: str     # 최종 검색 결과 텍스트
+    
+    # 최종 응답
     final_response: str
 
-
-# main.py의 Request Body
+# API 요청 바디
 class ChatRequest(BaseModel):
-    user_query: str = Field(..., min_length=1, description="사용자가 입력한 질의")
+    user_query: str = Field(..., min_length=1, description="사용자 입력")
+    history: List[dict] = Field(default=[], description="대화 히스토리 [{'role': 'user', 'content': '...'}, ...]")

@@ -1,12 +1,12 @@
 # main.py
 import json
+import traceback  # 👈 추가
 from typing import Any, Generator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-# 모듈화된 파일들에서 import
 from schemas import ChatRequest
 from graph import build_graph
 
@@ -22,54 +22,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 그래프 빌드
 workflow = build_graph()
-
 
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {"status": "ok"}
 
-
-def stream_generator(user_query: str) -> Generator[str, None, None]:
-    """LangGraph 실행 결과를 실시간 SSE 포맷으로 전송"""
-    payload = {"user_query": user_query}
+def stream_generator(user_query: str, history: list) -> Generator[str, None, None]:
+    """LangGraph 실행 결과를 SSE 포맷으로 실시간 전송"""
+    
+    payload = {
+        "user_query": user_query,
+        "messages": history,
+        "interview_context": ""
+    }
 
     try:
-        # workflow.stream은 노드(단계)가 끝날 때마다 상태를 반환합니다.
         for event in workflow.stream(payload):
             for node_name, state_update in event.items():
 
-                # 1. Researcher 단계: 조사 결과가 있으면 로그 전송
-                if node_name == "researcher" and "research_result" in state_update:
-                    log_data = json.dumps(
-                        {
-                            "type": "log",
-                            "content": f"🔎 조사 완료: {state_update['research_result'][:30]}...",
-                        },
-                        ensure_ascii=False,
-                    )
-                    yield f"data: {log_data}\n\n"
+                # 1. Researcher 로그 전송
+                if node_name == "researcher" and "search_logs" in state_update:
+                    logs = state_update["search_logs"]
+                    if logs:
+                        log_content = logs[-1]
+                        log_data = json.dumps(
+                            {
+                                "type": "log",
+                                "content": f"🔎 {log_content[:40]}...",
+                            },
+                            ensure_ascii=False,
+                        )
+                        yield f"data: {log_data}\n\n"
 
-                # 2. Writer 단계: 최종 답변이 있으면 전송
-                # (LangGraph 특성상 Writer 노드가 완료되어야 텍스트가 나옵니다)
-                if node_name == "writer" and "final_response" in state_update:
+                # 2. Writer 또는 Interviewer의 최종 텍스트 전송
+                if node_name in ["writer", "interviewer"] and "final_response" in state_update:
                     final_res = state_update["final_response"]
-
-                    # 프론트엔드에서 '타자 치는 효과'를 위해 전체 텍스트를 보냄
                     data = json.dumps(
                         {"type": "answer", "content": final_res}, ensure_ascii=False
                     )
                     yield f"data: {data}\n\n"
 
     except Exception as e:
+        # 👇 [수정됨] 에러 발생 시 Docker 로그에 상세 내용 출력
+        print(f"\n🚨 [Main Stream Error] 🚨")
+        traceback.print_exc()
+        
         error_msg = json.dumps({"type": "error", "content": str(e)}, ensure_ascii=False)
         yield f"data: {error_msg}\n\n"
 
 
 @app.post("/chat")
 async def chat_stream(request: ChatRequest):
-    """스트리밍 엔드포인트"""
     return StreamingResponse(
-        stream_generator(request.user_query), media_type="text/event-stream"
+        stream_generator(request.user_query, request.history), 
+        media_type="text/event-stream"
     )

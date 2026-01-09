@@ -46,9 +46,8 @@ function useTypewriter(text: string, speed = 10) {
 // 메시지 컴포넌트 (개별 메시지 렌더링)
 const MessageItem = ({ message }: { message: Message }) => {
   // 봇이면서 스트리밍 중(방금 도착한 메시지)일 때만 타자 효과 적용
-  // 이미 지나간 메시지나 유저는 그냥 보여줌
   const shouldAnimate = message.role === "assistant" && message.isStreaming;
-  const typedText = useTypewriter(message.text, 15); // 속도 조절 (작을수록 빠름)
+  const typedText = useTypewriter(message.text, 15); // 속도 조절
   
   const content = shouldAnimate ? typedText : message.text;
 
@@ -70,8 +69,22 @@ const MessageItem = ({ message }: { message: Message }) => {
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               components={{
+                // 1. 링크 스타일
                 a: ({ node, ...props }) => (
                   <a {...props} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline" />
+                ),
+                // 2. 이미지 스타일 (여기가 핵심 수정 사항입니다!) 👇
+                img: ({ node, ...props }) => (
+                  // 1. 액자 (Frame): 넘치는 이미지를 잘라내는 역할
+                  <span className="mx-auto my-4 block h-[250px] w-[250px] overflow-hidden rounded-2xl shadow-lg border border-slate-600/50 relative">
+                    <img
+                      {...props}
+                      // 2. 내용물 (Content): 1.25배 확대(scale-125)하여 가장자리의 로고를 밖으로 밀어냄
+                      // object-center: 확대해도 중앙(향수병)은 유지
+                      className="h-full w-full object-cover object-center scale-125"
+                      alt={props.alt || "Perfume Image"}
+                    />
+                  </span>
                 ),
               }}
             >
@@ -91,6 +104,7 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [meta, setMeta] = useState<ChatMeta | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -99,7 +113,7 @@ export default function Home() {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
 
-    // 1. 이전 메시지들의 isStreaming을 모두 false로 변경 (애니메이션 중지)
+    // 1. 이전 메시지들의 isStreaming을 모두 false로 변경
     setMessages((prev) => prev.map(m => ({ ...m, isStreaming: false })));
 
     // 2. 새 유저 메시지 추가
@@ -120,7 +134,7 @@ export default function Home() {
         throw new Error("서버 연결 실패");
       }
 
-      // 3. 봇 응답 Placeholder 추가 (빈 텍스트)
+      // 3. 봇 응답 Placeholder 추가
       setMessages((prev) => [...prev, { role: "assistant", text: "", isStreaming: true }]);
 
       const reader = response.body.getReader();
@@ -158,7 +172,6 @@ export default function Home() {
                   return updated;
                 });
               } else if (data.type === "log") {
-                // 로그(조사 결과 등) 처리 로직 (필요시 구현)
                 console.log("Log:", data.content);
               }
               
