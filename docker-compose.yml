@@ -66,6 +66,8 @@ services:
       data-init:
         condition: service_completed_successfully
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - .env
 
   frontend:
     build:
@@ -82,6 +84,25 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - backend
+
+  etl-worker:
+    image: python:3.9-slim
+    container_name: perfume-etl-worker
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: >
+      sh -c "
+      pip install pandas psycopg2-binary && 
+      echo '---------- Vector DB ETL ----------' &&
+      python backend/scripts/vectorDB/run_vector_etl.py
+      "
 
 volumes:
   pgdata:

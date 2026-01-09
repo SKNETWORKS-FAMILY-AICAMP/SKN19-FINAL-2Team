@@ -2,7 +2,6 @@
 set -e
 
 # PostgreSQL 접속 정보
-# docker-compose의 환경 변수와 동일한 키 사용
 DB_HOST=${POSTGRES_HOST:-db}
 DB_PORT=${POSTGRES_PORT:-5432}
 DB_USER=${POSTGRES_USER:-scentence}
@@ -27,8 +26,25 @@ for f in tables/*.py; do
 done
 
 # 2) DB 적재: load/*.py 실행
+
+# [중요 변경] 부모 테이블(BASIC)을 먼저 명시적으로 실행
+echo "[load] to_db_TB_PERFUME_BASIC_M.py (Priority)"
+f="load/to_db_TB_PERFUME_BASIC_M.py"
+sed \
+    -e "s/\"host\": \"localhost\"/\"host\": \"${DB_HOST}\"/" \
+    -e "s/\"port\": \"5433\"/\"port\": \"${DB_PORT}\"/" \
+    "$f" | python3
+
+# 나머지 테이블 실행 (BASIC은 제외하고 실행)
 for f in load/*.py; do
-  echo "[load] $(basename "$f")"
+  filename=$(basename "$f")
+  
+  # 위에서 이미 실행한 BASIC 파일은 건너뜀
+  if [ "$filename" == "to_db_TB_PERFUME_BASIC_M.py" ]; then
+    continue
+  fi
+
+  echo "[load] $filename"
   sed \
     -e "s/\"host\": \"localhost\"/\"host\": \"${DB_HOST}\"/" \
     -e "s/\"port\": \"5433\"/\"port\": \"${DB_PORT}\"/" \

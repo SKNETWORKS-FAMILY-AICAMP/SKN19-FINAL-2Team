@@ -1,397 +1,302 @@
 # -*- coding: utf-8 -*- 
-from langgraph.graph import StateGraph, START, END
-from typing_extensions import TypedDict, Literal
-from openai import OpenAI
+import os
 import json
 import re
-
+import psycopg2
+from psycopg2.extras import DictCursor
+from typing_extensions import TypedDict, Literal
+from langgraph.graph import StateGraph, START, END
+from openai import OpenAI
 from dotenv import load_dotenv
+
 load_dotenv()
 
-# 안전한 JSON 파싱 함수 추가
+# ==========================================
+# 1. DB 설정
+# ==========================================
+DB_CONFIG = {
+    "dbname": "perfume_db",
+    "user": "scentence",
+    "password": "scentence",
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": os.getenv("DB_PORT", "5433") 
+}
+
+client = OpenAI()
+
+# ==========================================
+# 2. 유틸리티 & 메타데이터
+# ==========================================
+def get_db_connection():
+    return psycopg2.connect(**DB_CONFIG)
+
 def safe_json_parse(text: str, default=None):
-    """JSON 파싱을 안전하게 처리 - 마크다운 코드 블록이나 설명 텍스트 제거"""
-    if not text or not text.strip():
-        return default
-    
+    if not text or not text.strip(): return default
     try:
-        # 마크다운 코드 블록 제거
         text = re.sub(r'```json\s*', '', text, flags=re.IGNORECASE)
-        text = re.sub(r'```\s*', '', text)
-        text = text.strip()
-        
-        # JSON 객체 부분만 추출 (중괄호로 시작하고 끝나는 부분)
+        text = re.sub(r'```\s*', '', text).strip()
         json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', text, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        
-        # 직접 파싱 시도
-        return json.loads(text)
-    except (json.JSONDecodeError, AttributeError, ValueError) as e:
-        print(f"JSON 파싱 오류: {e}, 원본 텍스트: {text[:100]}")
+        return json.loads(json_match.group()) if json_match else json.loads(text)
+    except:
         return default
 
-# State 정의
+def get_embedding(text):
+    return client.embeddings.create(input=text.replace("\n", " "), model="text-embedding-3-small").data[0].embedding
+
+def load_metadata_from_db():
+    print("🔄 [System] DB에서 메타데이터 로딩 중...")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        tables = {
+            "SEASONS": ("tb_perfume_season_m", "season"),
+            "GENDERS": ("tb_perfume_aud_m", "audience"),
+            "OCCASIONS": ("tb_perfume_oca_m", "occasion"),
+            "ACCORDS": ("tb_perfume_accord_m", "accord")
+        }
+        meta = {}
+        for key, (tbl, col) in tables.items():
+            cur.execute(f"SELECT DISTINCT {col} FROM {tbl} WHERE {col} IS NOT NULL")
+            meta[key] = [r[0] for r in cur.fetchall()]
+        conn.close()
+        return meta
+    except:
+        return {"SEASONS": [], "GENDERS": [], "OCCASIONS": [], "ACCORDS": []}
+
+METADATA = load_metadata_from_db()
+
+# ==========================================
+# 3. 도구 (Tools)
+# ==========================================
+
+def search_notes_smart(keyword: str) -> list[str]:
+    """하이브리드 노트 검색 (Text + Vector)"""
+    results = []
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # 1. Text Search
+        clean_keyword = keyword.replace("향", "").strip()
+        cur.execute("SELECT note FROM tb_note_embedding_m WHERE note ILIKE %s LIMIT 3", (f"%{clean_keyword}%",))
+        results.extend([r[0] for r in cur.fetchall()])
+        
+        # 2. Vector Search (부족할 경우)
+        if len(results) < 3:
+            query_vector = get_embedding(keyword)
+            exclude_cond = ""
+            if results:
+                formatted_excludes = "'" + "','".join([r.replace("'", "''") for r in results]) + "'"
+                exclude_cond = f"AND note NOT IN ({formatted_excludes})"
+            
+            sql = f"""
+                SELECT note FROM tb_note_embedding_m WHERE 1=1 {exclude_cond}
+                ORDER BY embedding <=> %s::vector LIMIT %s;
+            """
+            cur.execute(sql, (query_vector, 3 - len(results)))
+            results.extend([r[0] for r in cur.fetchall()])
+            
+        conn.close()
+        print(f"   ✅ 노트 검색 결과: '{keyword}' -> {list(set(results))}")
+        return list(set(results))
+    except Exception as e:
+        print(f"⚠️ 노트 검색 오류: {e}")
+        return []
+
+def search_exact_entity_name(keyword: str, entity_type: str = "brand") -> str | None:
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        table = "tb_perfume_basic_m"
+        col = "perfume_brand" if entity_type == "brand" else "perfume_name"
+        cur.execute(f"SELECT {col} FROM {table} WHERE {col} ILIKE %s LIMIT 1", (f"%{keyword}%",))
+        row = cur.fetchone()
+        conn.close()
+        return row[0] if row else None
+    except:
+        return keyword
+
+def execute_search_with_fallback(filters: list[dict]) -> str:
+    """
+    [핵심 수정] 필터 조건에 맞는 향수를 검색하되, 
+    STRING_AGG를 사용하여 노트, 어코드, 계절 정보를 모두 가져옵니다.
+    """
+    if not filters: return "검색 조건을 추출하지 못했습니다."
+    
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=DictCursor)
+    
+    while True:
+        print(f"\n🔄 [DB] 검색 시도: {[f['column'] + '=' + str(f['value']) for f in filters]}")
+        
+        where_clauses = []
+        params = []
+        
+        # 1. WHERE 조건절 동적 생성
+        for f in filters:
+            col = f['column']
+            val = f['value']
+            
+            if col == 'brand': clause = "AND b.perfume_brand ILIKE %s"
+            elif col == 'perfume_name': clause = "AND b.perfume_name ILIKE %s"
+            elif col == 'note': 
+                if isinstance(val, list) and val:
+                    # 노트 목록 중 '하나라도' 포함되면 검색 (OR 조건 느낌의 IN)
+                    # 주의: JOIN 후 필터링하면 해당 노트만 남을 수 있으므로, 
+                    # 정확한 스펙을 위해서는 Subquery가 좋지만 성능상 여기서는 JOIN 필터 사용
+                    clause = f"AND n.note IN ({','.join(['%s']*len(val))})"
+                    where_clauses.append(clause)
+                    params.extend(val)
+                    continue
+                else: clause = "AND n.note = %s"
+            elif col == 'season': clause = "AND s.season = %s"
+            elif col == 'gender': clause = "AND a.audience = %s"
+            elif col == 'occasion': clause = "AND o.occasion = %s"
+            elif col == 'accord': clause = "AND ac.accord = %s"
+            else: continue
+            
+            where_clauses.append(clause)
+            params.append(val)
+
+        # 2. [Aggregation Query] 모든 정보 긁어오기
+        # STRING_AGG(DISTINCT col, ', ')로 중복 제거하며 합치기
+        sql = f"""
+            SELECT 
+                b.perfume_id,
+                b.perfume_name, 
+                b.perfume_brand,
+                STRING_AGG(DISTINCT ac.accord, ', ') as accords,
+                STRING_AGG(DISTINCT s.season, ', ') as seasons,
+                STRING_AGG(DISTINCT a.audience, ', ') as genders,
+                STRING_AGG(DISTINCT o.occasion, ', ') as occasions,
+                -- 검색된 노트 위주로 보일 수 있지만 정보 제공 차원
+                STRING_AGG(DISTINCT n.note, ', ') as notes 
+            FROM tb_perfume_basic_m b
+            LEFT JOIN tb_perfume_notes_m n ON b.perfume_id = n.perfume_id
+            LEFT JOIN tb_perfume_season_m s ON b.perfume_id = s.perfume_id
+            LEFT JOIN tb_perfume_aud_m a ON b.perfume_id = a.perfume_id
+            LEFT JOIN tb_perfume_oca_m o ON b.perfume_id = o.perfume_id
+            LEFT JOIN tb_perfume_accord_m ac ON b.perfume_id = ac.perfume_id
+            WHERE 1=1 {' '.join(where_clauses)}
+            GROUP BY b.perfume_id, b.perfume_name, b.perfume_brand
+            LIMIT 5;
+        """
+        
+        try:
+            cur.execute(sql, tuple(params))
+            rows = cur.fetchall()
+            
+            if rows:
+                conn.close()
+                # 3. 결과 포맷팅 (풍부한 정보 제공)
+                result_txt = "🔍 [DB 검색 결과 - 상세 정보]:\n\n"
+                for i, r in enumerate(rows, 1):
+                    result_txt += f"{i}. [{r['perfume_brand']}] {r['perfume_name']}\n"
+                    result_txt += f"   - 특징(Accord): {r['accords']}\n"
+                    result_txt += f"   - 분위기: {r['seasons']} / {r['genders']} / {r['occasions']}\n"
+                    result_txt += f"   - 주요 노트: {r['notes']}\n\n"
+                return result_txt
+                
+        except Exception as e:
+            conn.rollback()
+            print(f"   ⚠️ SQL 에러: {e}")
+            
+        if filters:
+            removed = filters.pop()
+            print(f"   ❌ 실패 -> 조건 완화: '{removed['column']}' 제거")
+        else:
+            break
+            
+    conn.close()
+    return "검색 결과가 없습니다."
+
+# ==========================================
+# 4. State & Nodes
+# ==========================================
 class State(TypedDict):
     user_query: str
     route: Literal["interviewer", "researcher", "writer"]
-    conversation_history: list[dict] | None  # 대화 이력
     clarified_query: str | None
     research_result: str | None
     final_response: str
 
-client = OpenAI()
-
-# Supervisor
 def supervisor(state: State) -> State:
-    """질문 분석 후 라우트 결정"""
-    
-    prompt = f"""사용자 질문을 분석하세요:
-    "{state['user_query']}"
-    
-    다음 중 하나만 선택:
-    - interviewer: 질문이 애매하거나 추가 정보가 필요한 경우
-    - researcher: 질문이 명확하고 조사가 필요한 경우
-    - writer: 단순한 사실 질문으로 바로 답변 가능한 경우
-    
-    반드시 JSON 형식으로만 응답하세요: {{"route": "interviewer"}} 또는 {{"route": "researcher"}} 또는 {{"route": "writer"}}
-    """
-    
-    try:
-        message = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=100,
-            response_format={"type": "json_object"}
-        )
-        
-        content = message.choices[0].message.content
-        result = safe_json_parse(content, {"route": "researcher"})
-        
-        route = result.get("route", "researcher")
-        
-        # 유효한 라우트인지 검증
-        if route not in ["interviewer", "researcher", "writer"]:
-            print(f"경고: 잘못된 라우트 '{route}', 기본값 'researcher' 사용")
-            route = "researcher"
-        
-        return {"route": route}
-    except Exception as e:
-        print(f"Supervisor 오류: {e}")
-        return {"route": "researcher"}
+    return {"route": "researcher"} # 편의상 고정 (테스트용)
 
-# Interviewer - 사용자와 대화하며 충분한 정보 수집
-def interviewer(state: State) -> State:
-    """사용자와 대화하며 정보를 수집하고, 충분한 정보가 모이면 researcher로 이동"""
-    
-    conversation_history = state.get("conversation_history", [])
-    max_turns = 3  # 최대 대화 턴 수
-    
-    print("\n" + "="*60)
-    print("[대화형 정보 수집 시작]")
-    print("="*60)
-    
-    for turn in range(max_turns):
-        print(f"\n--- 대화 턴 {turn + 1}/{max_turns} ---")
-        
-        # 1. 현재까지의 정보로 충분한지 판단
-        if conversation_history:
-            conversation_text = "\n".join([f"Q: {item['question']}\nA: {item['answer']}" for item in conversation_history])
-            
-            sufficiency_prompt = f"""원래 질문: "{state['user_query']}"
-
-대화 이력:
-{conversation_text}
-
-위 정보만으로 사용자에게 향수를 추천하기에 충분한가요?
-
-JSON 형식으로 응답하세요:
-{{
-    "is_sufficient": true 또는 false,
-    "reason": "판단 이유"
-}}"""
-            try:
-                sufficiency_message = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": sufficiency_prompt}],
-                    max_tokens=150,
-                    response_format={"type": "json_object"}
-                )
-                
-                sufficiency_result = safe_json_parse(
-                    sufficiency_message.choices[0].message.content,
-                    {"is_sufficient": False}
-                )
-                
-                if sufficiency_result.get("is_sufficient", False):
-                    print(f"\n[정보 수집 완료] {sufficiency_result.get('reason', '')}")
-                    break
-            except Exception as e:
-                print(f"충분성 판단 오류: {e}")
-        
-        # 2. 추가 질문 생성
-        conversation_context = ""
-        if conversation_history:
-            conversation_text = "\n".join([f"Q: {item['question']}\nA: {item['answer']}" for item in conversation_history])
-            conversation_context = f"\n기존 대화:\n{conversation_text}\n"
-        
-        question_prompt = f"""원래 질문: "{state['user_query']}"
-{conversation_context}
-향수 추천에 필요한 핵심 정보를 얻기 위한 명확화 질문 1개를 생성하세요.
-
-JSON 형식으로 응답하세요:
-{{
-    "question": "명확화 질문"
-}}"""
-        
-        try:
-            question_message = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": question_prompt}],
-                max_tokens=150,
-                response_format={"type": "json_object"}
-            )
-            
-            question_result = safe_json_parse(
-                question_message.choices[0].message.content,
-                {"question": "어떤 향을 선호하시나요?"}
-            )
-            
-            question = question_result.get("question", "어떤 향을 선호하시나요?")
-            print(f"\n질문: {question}")
-            
-            #-----------------------------------------------------------------
-            # 3. 사용자 응답 받기 (실제 응답 받는걸로 바꾸어야함)
-            answer_prompt = f"""사용자 원래 질문: "{state['user_query']}"
-            명확화 질문: "{question}"
-
-            위 명확화 질문에 대한 간단하고 자연스러운 답변을 생성하세요. (1-2문장)"""
-            
-            answer_message = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": answer_prompt}],
-                max_tokens=100
-            )
-            
-            answer = answer_message.choices[0].message.content.strip()
-            print(f"답변: {answer}")
-            #-----------------------------------------------------------------
-            
-            # 대화 이력에 추가
-            conversation_history.append({
-                "question": question,
-                "answer": answer
-            })
-            
-        except Exception as e:
-            print(f"질문 생성/응답 오류: {e}")
-            break
-    
-    # 4. 명확화된 쿼리 생성
-    try:
-        conversation_text = "\n".join([f"Q: {item['question']}\nA: {item['answer']}" for item in conversation_history])
-        
-        clarified_prompt = f"""원래 질문: "{state['user_query']}"
-
-대화 내용:
-{conversation_text}
-
-위 대화를 바탕으로 구체적이고 명확한 향수 추천 요청문을 작성하세요.
-
-JSON 형식으로 응답하세요:
-{{
-    "clarified_query": "명확화된 질문"
-}}"""
-        
-        clarified_message = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": clarified_prompt}],
-            max_tokens=200,
-            response_format={"type": "json_object"}
-        )
-        
-        clarified_result = safe_json_parse(
-            clarified_message.choices[0].message.content,
-            {"clarified_query": state['user_query']}
-        )
-        
-        clarified_query = clarified_result.get("clarified_query", state['user_query'])
-        print(f"\n[명확화된 쿼리] {clarified_query}")
-        
-    except Exception as e:
-        print(f"명확화 쿼리 생성 오류: {e}")
-        clarified_query = state['user_query']
-    
-    print("="*60 + "\n")
-    
-    return {
-        "conversation_history": conversation_history,
-        "clarified_query": clarified_query,
-        "route": "researcher"
-    }
-
-# Researcher
 def researcher(state: State) -> State:
-    """조사 수행"""
-    
     query = state.get("clarified_query") or state["user_query"]
-    prompt = f"'{query}'에 대해 조사하고 관련 정보를 수집하세요."
+    print(f"\n🕵️ [Researcher] 검색 설계 시작: '{query}'")
     
+    prompt = f"""
+    당신은 SQL 검색 조건을 설계하는 전문가입니다.
+    사용자 질문: "{query}"
+    DB 메타데이터: {json.dumps(METADATA, indent=2, ensure_ascii=False)}
+    
+    [규칙]
+    1. 'filters'에 SQL 조건을 담되, **중요한 조건 순서대로** 배치하세요.
+    2. **[필수] 노트(향) 키워드는 반드시 영어(English)로 번역해서 'note_keywords'에 담으세요.** (예: 레몬->Lemon, 흙->Earth, 장미->Rose)
+    3. 브랜드/향수 이름은 'entity_keyword'에 담으세요.
+    
+    응답(JSON):
+    {{
+        "filters": [ {{ "column": "accord", "value": "Citrus" }} ],
+        "note_search_needed": true,
+        "note_keywords": ["Lemon"], 
+        "entity_search_needed": false
+    }}
+    """
     try:
-        message = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
+        msg = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": prompt}], 
+            response_format={"type": "json_object"}
         )
+        plan = safe_json_parse(msg.choices[0].message.content)
         
-        return {
-            "research_result": message.choices[0].message.content,
-            "route": "writer"
-        }
+        final_filters = []
+        if plan.get("entity_search_needed"):
+            ex_name = search_exact_entity_name(plan["entity_keyword"], plan.get("entity_type", "brand"))
+            if ex_name: final_filters.insert(0, {"column": "brand", "value": ex_name})
+            
+        if plan.get("note_search_needed"):
+            notes = []
+            for k in plan.get("note_keywords", []):
+                notes.extend(search_notes_smart(k))
+            if notes: final_filters.append({"column": "note", "value": list(set(notes))})
+            
+        for f in plan.get("filters", []):
+            final_filters.append(f)
+            
+        result = execute_search_with_fallback(final_filters)
     except Exception as e:
-        print(f"Researcher 오류: {e}")
-        return {
-            "research_result": "조사 중 오류가 발생했습니다.",
-            "route": "writer"
-        }
+        result = f"오류 발생: {e}"
+        
+    return {"research_result": result, "route": "writer"}
 
-# Writer
 def writer(state: State) -> State:
-    """최종 응답 생성"""
+    print("\n✍️ [Writer] 답변 생성 중...")
+    prompt = f"""
+    당신은 전문 조향사입니다. 아래 [DB 검색 결과]를 바탕으로 추천 답변을 작성하세요.
     
-    context = f"""
-    질문: {state['user_query']}
-    {f"명확화: {state.get('clarified_query', '')}" if state.get('clarified_query') else ""}
-    {f"조사: {state.get('research_result', '')}" if state.get('research_result') else ""}
+    [사용자 질문]: {state['user_query']}
+    [DB 검색 결과]: 
+    {state.get('research_result')}
+    
+    [지침]
+    1. **DB에서 찾은 정보(노트, 어코드, 분위기 등)를 상세히 인용하여 설명하세요.**
+    2. 단순히 나열하지 말고, "이 향수는 ~한 노트가 어우러져 ~한 느낌을 줍니다" 처럼 스토리텔링 하세요.
+    3. 검색된 향수가 없다면 솔직히 말하고 대안을 제시하세요.
     """
-    
-    prompt = f"다음 정보로 명확하고 도움이 되는 최종 응답을 작성하세요:\n{context}"
-    
-    try:
-        message = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=1000
-        )
-        
-        return {"final_response": message.choices[0].message.content}
-    except Exception as e:
-        print(f"Writer 오류: {e}")
-        return {"final_response": "응답 생성 중 오류가 발생했습니다."}
+    msg = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
+    return {"final_response": msg.choices[0].message.content}
 
-# 라우팅 함수
-def route_after_supervisor(state: State) -> str:
-    """Supervisor 후 라우팅"""
-    route = state.get("route", "researcher")
-    if route not in ["interviewer", "researcher", "writer"]:
-        return "researcher"
-    return route
-
-# 그래프 구성
 def build_graph():
-    """
-    간소화된 그래프 구조:
-    START → Supervisor → [interviewer | researcher | writer] → researcher → writer → END
-    
-    - interviewer: 사용자와 대화하며 정보 수집 (내부에서 여러 턴 처리)
-    - researcher: 명확한 질문에 대해 조사 수행
-    - writer: 단순 질문에 직접 답변 또는 최종 응답 생성
-    """
     graph = StateGraph(State)
-    
-    # 노드 추가
     graph.add_node("supervisor", supervisor)
-    graph.add_node("interviewer", interviewer)
     graph.add_node("researcher", researcher)
     graph.add_node("writer", writer)
-    
-    # 엣지 연결
     graph.add_edge(START, "supervisor")
-    
-    # Supervisor 후 조건부 분기
-    graph.add_conditional_edges(
-        "supervisor",
-        route_after_supervisor,
-        {
-            "interviewer": "interviewer",  # 대화 필요
-            "researcher": "researcher",     # 바로 조사
-            "writer": "writer"              # 바로 답변
-        }
-    )
-    
-    # Interviewer → Researcher (정보 수집 완료 후)
-    graph.add_edge("interviewer", "researcher")
-    
-    # Researcher → Writer (조사 완료 후)
+    graph.add_edge("supervisor", "researcher")
     graph.add_edge("researcher", "writer")
-    
-    # Writer → END (최종 응답 완료)
     graph.add_edge("writer", END)
-    
     return graph.compile()
-
-
-if __name__ == "__main__":
-    workflow = build_graph()
-    graph = workflow.get_graph()
-
-    # 그래프 시각화
-    mermaid_diagram = graph.draw_mermaid()
-    print(mermaid_diagram)
-    
-    # 시나리오별 테스트 쿼리
-    scenario_a_queries = [
-        # 시나리오 A: Supervisor → Interviewer → Researcher → Writer
-        # (애매하거나 추가 정보가 필요한 질문 - 대화를 통해 정보 수집)
-        "향수 추천해줘",
-        "좋은 향수 있어?",
-    ]
-    
-    scenario_b_queries = [
-        # 시나리오 B: Supervisor → Researcher → Writer
-        # (충분한 정보가 있어서 바로 조사 가능한 질문)
-        "여름에 시원하게 느껴지는 시트러스 계열 향수 추천해줘",
-        "30대 남성용 비즈니스 향수 추천해줘. 가격대는 10만원 이하로",
-    ]
-    
-    scenario_c_queries = [
-        # 시나리오 C: Supervisor → Writer
-        # (검색이나 조사가 필요 없는 단순 질문)
-        "향수는 어떻게 뿌리나요?",
-        "EDP와 EDT의 차이가 뭔가요?",
-    ]
-    
-    # 각 시나리오별로 하나씩 테스트
-    all_queries = [
-        ("시나리오 A (Interviewer 경로)", scenario_a_queries[0]),
-        ("시나리오 B (Researcher 경로)", scenario_b_queries[0]),
-        ("시나리오 C (Writer 경로)", scenario_c_queries[0]),
-    ]
-    
-    for scenario_name, query in all_queries:
-        print(f"\n{'='*80}")
-        print(f"[{scenario_name}]")
-        print(f"Query: {query}")
-        print('='*80)
-        
-        try:
-            result = workflow.invoke({"user_query": query})
-            
-            print(f"\n{'='*80}")
-            print("[최종 응답]")
-            print('='*80)
-            print(f"{result['final_response']}")
-            
-            print(f"\n{'='*80}")
-            print("[경로 확인]")
-            print('='*80)
-            if result.get('conversation_history'):
-                print(f"- Interviewer 경로 사용됨 (대화 {len(result['conversation_history'])}턴)")
-            if result.get('research_result'):
-                print(f"- Researcher 경로 사용됨 (조사 수행)")
-            print(f"- Writer 경로 사용됨 (최종 응답 생성)")
-            
-        except Exception as e:
-            print(f"\n오류 발생: {e}")
-            import traceback
-            traceback.print_exc()
