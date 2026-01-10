@@ -1,4 +1,3 @@
-# tools.py
 import re
 import json
 import traceback
@@ -9,7 +8,7 @@ from database import get_db_connection
 client = OpenAI()
 
 # ==========================================
-# 유틸리티
+# 1. 유틸리티 함수
 # ==========================================
 def safe_json_parse(text: str, default=None):
     if not text or not text.strip():
@@ -32,12 +31,89 @@ def get_embedding(text):
             .embedding
         )
     except Exception:
-        print("⚠️ Embedding Error")
+        print("⚠️ Embedding Error", flush=True)
         traceback.print_exc()
         return []
 
 # ==========================================
-# 검색 도구 (Tools)
+# 2. 데이터 가공 헬퍼 함수 (핵심 업그레이드)
+# ==========================================
+def filter_by_votes(data_list: list, threshold_ratio=0.10) -> str:
+    """
+    JSON 리스트([{'name': 'A', 'vote': 100}, ...])를 받아
+    총 투표수의 일정 비율(예: 10%) 이상인 항목만 남기고, 투표순으로 정렬하여 문자열로 반환
+    """
+    if not data_list:
+        return "정보 없음"
+    
+    # 투표수가 없는 경우(None) 0으로 처리하며 데이터 정제
+    clean_list = []
+    for item in data_list:
+        if not item: continue
+        name = item.get('name')
+        vote = item.get('vote')
+        if not name: continue
+        clean_list.append({'name': name, 'vote': int(vote) if vote else 0})
+
+    if not clean_list:
+        return "정보 없음"
+
+    # 총 투표수 계산
+    total_votes = sum(item['vote'] for item in clean_list)
+    
+    # 투표 데이터가 아예 없으면(전부 0) 그냥 상위 5개만 보여줌
+    if total_votes == 0:
+        return ", ".join([i['name'] for i in clean_list[:5]])
+
+    # 비율 필터링 (threshold_ratio 이상만 생존)
+    filtered = [
+        item for item in clean_list 
+        if (item['vote'] / total_votes) >= threshold_ratio
+    ]
+    
+    # 투표 많은 순 정렬
+    filtered.sort(key=lambda x: x['vote'], reverse=True)
+    
+    # 필터링 결과가 너무 엄격해서 다 사라졌으면, 1등이라도 리턴
+    if not filtered and clean_list:
+        clean_list.sort(key=lambda x: x['vote'], reverse=True)
+        return clean_list[0]['name']
+
+    return ", ".join([f"{item['name']}" for item in filtered])
+
+def format_notes(note_list: list) -> str:
+    """
+    노트 리스트([{'name': 'Rose', 'type': 'Top'}, ...])를 받아
+    Top / Middle / Base 로 나누어 문자열로 반환
+    """
+    if not note_list:
+        return "정보 없음"
+    
+    top, mid, base, unknown = [], [], [], []
+    
+    for item in note_list:
+        if not item: continue
+        n_type = str(item.get('type', '')).lower()
+        name = item.get('name', '')
+        if not name: continue
+        
+        if 'top' in n_type: top.append(name)
+        elif 'middle' in n_type or 'heart' in n_type: mid.append(name)
+        elif 'base' in n_type or 'bottom' in n_type: base.append(name)
+        else: unknown.append(name)
+        
+    result = []
+    if top: result.append(f"   - Top: {', '.join(top)}")
+    if mid: result.append(f"   - Middle: {', '.join(mid)}")
+    if base: result.append(f"   - Base: {', '.join(base)}")
+    # 타입 정보가 없는 경우 기타로 분류
+    if unknown: result.append(f"   - Notes: {', '.join(unknown)}")
+    
+    return "\n".join(result) if result else "정보 없음"
+
+
+# ==========================================
+# 3. 검색 도구 (Tools)
 # ==========================================
 def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
     """
@@ -74,7 +150,7 @@ def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
         conn.close()
         return list(set(results))
     except Exception:
-        print(f"⚠️ Note Search Error: {keyword}")
+        print(f"⚠️ Note Search Error: {keyword}", flush=True)
         traceback.print_exc()
         return []
 
@@ -93,14 +169,13 @@ def search_exact_entity(keyword: str, type_: str = "brand") -> str | None:
         conn.close()
         return row[0] if row else None
     except Exception:
-        print(f"⚠️ Entity Search Error: {keyword}")
+        print(f"⚠️ Entity Search Error: {keyword}", flush=True)
         traceback.print_exc()
         return None
 
 def execute_precise_search(filters: list[dict]) -> str | None:
     """
-    필터 조건에 맞춰 향수를 검색하고, 모든 상세 정보를 반환합니다.
-    로그를 사람이 읽기 좋게 출력합니다.
+    필터 조건에 맞춰 향수를 검색하고, 투표수 기반으로 정제된 상세 정보를 반환합니다.
     """
     if not filters:
         return None
@@ -113,10 +188,9 @@ def execute_precise_search(filters: list[dict]) -> str | None:
         where_clauses = []
         params = []
         
-        # 로그 개선: 깔끔하게 필터 내역 출력
-        print(f"\n🔍 [검색 필터 적용]")
+        print(f"\n🔍 [DB 검색 요청 필터]: {filters}", flush=True)
+        
         valid_filters = False
-
         for f in filters:
             col = f.get("column", "").lower().strip()
             val = f.get("value")
@@ -130,10 +204,10 @@ def execute_precise_search(filters: list[dict]) -> str | None:
                 "occasion": "상황", "name": "이름"
             }
             readable_col = col_map.get(col, col)
-            print(f"   👉 [{readable_col}]: {val}")
+            print(f"   👉 [{readable_col}]: {val}", flush=True)
             valid_filters = True
 
-            # SQL 조립
+            # SQL WHERE절 조립
             if col == "brand":
                 where_clauses.append("AND b.perfume_brand ILIKE %s")
                 params.append(val)
@@ -162,35 +236,73 @@ def execute_precise_search(filters: list[dict]) -> str | None:
                 params.append(val)
 
         if not valid_filters or not where_clauses:
-            print("   ⚠️ 유효한 필터가 없어 검색을 중단합니다.")
+            print("   ⚠️ 유효한 필터가 없어 검색을 중단합니다.", flush=True)
             return None
 
-        # 정보 추가: 이미지, 조향사, 출시일 등 모든 정보 조회
+        # 👇 [핵심 변경] 데이터를 JSON으로 뭉쳐서 가져오는 SQL
+        # 중복 방지를 위해 서브쿼리와 GROUP BY를 사용합니다.
         sql = f"""
             SELECT 
                 b.perfume_id,
                 b.perfume_name, 
                 b.perfume_brand,
-                b.img_link,          
-                b.perfumer,          
-                b.release_year,      
-                b.concentration,     
-                STRING_AGG(DISTINCT ac.accord, ', ') as accords,
-                STRING_AGG(DISTINCT s.season, ', ') as seasons,
-                STRING_AGG(DISTINCT n.note, ', ') as notes 
+                b.img_link,
+                b.perfumer,
+                b.release_year,
+                
+                -- 노트 정보 (Type 포함)
+                (
+                    SELECT json_agg(json_build_object('name', sub_n.note, 'type', sub_n.type))
+                    FROM tb_perfume_notes_m sub_n
+                    WHERE sub_n.perfume_id = b.perfume_id
+                ) as notes_json,
+
+                -- 어코드 정보 (Vote 포함)
+                (
+                    SELECT json_agg(json_build_object('name', sub_ac.accord, 'vote', sub_ac.vote))
+                    FROM tb_perfume_accord_m sub_ac
+                    WHERE sub_ac.perfume_id = b.perfume_id
+                ) as accords_json,
+
+                -- 계절 정보 (Vote 포함)
+                (
+                    SELECT json_agg(json_build_object('name', sub_s.season, 'vote', sub_s.vote))
+                    FROM tb_perfume_season_m sub_s
+                    WHERE sub_s.perfume_id = b.perfume_id
+                ) as season_json,
+                
+                -- 성별 정보 (Vote 포함)
+                (
+                    SELECT json_agg(json_build_object('name', sub_a.audience, 'vote', sub_a.vote))
+                    FROM tb_perfume_aud_m sub_a
+                    WHERE sub_a.perfume_id = b.perfume_id
+                ) as gender_json,
+
+                -- 상황(Occasion) 정보 (Vote 포함)
+                (
+                    SELECT json_agg(json_build_object('name', sub_o.occasion, 'vote', sub_o.vote))
+                    FROM tb_perfume_oca_m sub_o
+                    WHERE sub_o.perfume_id = b.perfume_id
+                ) as occasion_json
+
             FROM tb_perfume_basic_m b
+            -- 검색 필터링을 위한 조인 (데이터 조회용이 아님, WHERE절을 위해 필요)
             LEFT JOIN tb_perfume_notes_m n ON b.perfume_id = n.perfume_id
+            LEFT JOIN tb_perfume_accord_m ac ON b.perfume_id = ac.perfume_id
             LEFT JOIN tb_perfume_season_m s ON b.perfume_id = s.perfume_id
             LEFT JOIN tb_perfume_aud_m a ON b.perfume_id = a.perfume_id
-            LEFT JOIN tb_perfume_accord_m ac ON b.perfume_id = ac.perfume_id
             LEFT JOIN tb_perfume_oca_m o ON b.perfume_id = o.perfume_id
+            
             WHERE 1=1 {' '.join(where_clauses)}
-            GROUP BY 
-                b.perfume_id, b.perfume_name, b.perfume_brand, 
-                b.img_link, b.perfumer, b.release_year, b.concentration
+            
+            GROUP BY b.perfume_id
             ORDER BY RANDOM()
             LIMIT 5;
         """
+        
+        # 실행될 쿼리 확인용 로그 (필요시 주석 해제)
+        # print(f"\n📝 [Executed SQL]:\n{sql}", flush=True)
+        # print(f"📝 [Parameters]: {tuple(params)}\n", flush=True)
         
         cur.execute(sql, tuple(params))
         rows = cur.fetchall()
@@ -198,24 +310,33 @@ def execute_precise_search(filters: list[dict]) -> str | None:
         if not rows:
             return None
             
-        # 결과 포맷팅
         result_txt = ""
         for i, r in enumerate(rows, 1):
+            # Python에서 데이터 가공 (필터링 및 구조화)
+            clean_accords = filter_by_votes(r['accords_json'], threshold_ratio=0.10) # 10% 미만 제거
+            clean_seasons = filter_by_votes(r['season_json'], threshold_ratio=0.15)  # 계절은 조금 더 엄격하게
+            clean_gender = filter_by_votes(r['gender_json'], threshold_ratio=0.10)
+            clean_occasion = filter_by_votes(r['occasion_json'], threshold_ratio=0.10)
+            formatted_notes = format_notes(r['notes_json'])
+
+            # 최종 텍스트 조립
             result_txt += f"no.{i}\n"
             result_txt += f"브랜드: {r['perfume_brand']}\n"
             result_txt += f"이름: {r['perfume_name']}\n"
-            result_txt += f"이미지: {r['img_link']}\n"  # Writer가 사용할 링크
+            result_txt += f"이미지: {r['img_link']}\n"
             result_txt += f"조향사: {r['perfumer'] or '정보 없음'}\n"
             result_txt += f"출시: {r['release_year'] or '?'}\n"
-            result_txt += f"노트: {r['notes'][:100]}...\n" 
-            result_txt += f"특징: {r['accords']}\n"
-            result_txt += f"계절: {r['seasons']}\n"
+            result_txt += f"성별: {clean_gender}\n"
+            result_txt += f"분위기(Accord): {clean_accords}\n"
+            result_txt += f"상황(TPO): {clean_occasion}\n"
+            result_txt += f"계절: {clean_seasons}\n"
+            result_txt += f"노트 구성:\n{formatted_notes}\n"
             result_txt += "-" * 20 + "\n"
             
         return result_txt
         
     except Exception:
-        print("⚠️ SQL Execution Error")
+        print("⚠️ SQL Execution Error", flush=True)
         traceback.print_exc()
         return None
     finally:

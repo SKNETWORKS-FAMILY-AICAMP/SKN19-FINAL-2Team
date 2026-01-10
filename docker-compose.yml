@@ -56,6 +56,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
+      - PYTHONUNBUFFERED=1
       - DB_HOST=db
       - DB_PORT=5432
       - DATABASE_URL=postgresql://scentence:scentence@db:5432/scentence_db
