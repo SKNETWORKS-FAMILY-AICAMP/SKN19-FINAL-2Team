@@ -46,25 +46,24 @@ function useTypewriter(text: string, speed = 10) {
 const MessageItem = ({ message }: { message: Message }) => {
   const shouldAnimate = message.role === "assistant" && message.isStreaming;
   const typedText = useTypewriter(message.text, 15);
-  
+
   const content = shouldAnimate ? typedText : message.text;
 
   return (
     <div className={`flex w-full ${message.role === "user" ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-sm ${
-          message.role === "user"
-            ? "bg-slate-800 text-slate-100"
-            : "bg-slate-700/50 text-slate-100"
-        }`}
+        className={`max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-sm ${message.role === "user"
+          ? "bg-slate-800 text-slate-100"
+          : "bg-slate-700/50 text-slate-100"
+          }`}
       >
         <p className="mb-1 font-semibold uppercase tracking-[0.2em] text-[0.6rem] text-slate-400">
           {message.role === "user" ? "나" : "AI"}
         </p>
-        
+
         {message.role === "assistant" ? (
           <div className="prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown 
+            <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
                 a: ({ node, ...props }) => (
@@ -96,7 +95,7 @@ const MessageItem = ({ message }: { message: Message }) => {
                 ),
               }}
             >
-              {content || "..."} 
+              {content || "..."}
             </ReactMarkdown>
           </div>
         ) : (
@@ -112,7 +111,7 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   const [threadId, setThreadId] = useState("");
 
   useEffect(() => {
@@ -127,11 +126,11 @@ export default function Home() {
   }, []);
 
   const handleNewChat = () => {
-    if (loading) return; 
+    if (loading) return;
     const newId = crypto.randomUUID();
-    localStorage.setItem("chat_thread_id", newId); 
+    localStorage.setItem("chat_thread_id", newId);
     setThreadId(newId);
-    setMessages([]); 
+    setMessages([]);
     setInputValue("");
     setError("");
     console.log("Session Reset. New Thread ID:", newId);
@@ -153,9 +152,9 @@ export default function Home() {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          user_query: trimmed, 
-          thread_id: threadId 
+        body: JSON.stringify({
+          user_query: trimmed,
+          thread_id: threadId
         }),
       });
 
@@ -193,7 +192,7 @@ export default function Home() {
                   const updated = [...prev];
                   const lastMsg = updated[updated.length - 1];
                   if (lastMsg.role === "assistant") {
-                    lastMsg.text = data.content; 
+                    lastMsg.text = data.content;
                   }
                   return updated;
                 });
@@ -214,13 +213,13 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 px-4 py-12 text-slate-50">
       <div className="mx-auto w-full max-w-3xl space-y-8">
-        
+
         <header className="space-y-2">
           <p className="text-sm uppercase tracking-[0.4em] text-slate-400">Perfume Assistant</p>
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-semibold text-white">향수 추천 AI</h1>
-            
-            <button 
+            <h1 className="text-3xl font-semibold text-white">SCENTENCE AI</h1>
+
+            <button
               onClick={handleNewChat}
               disabled={loading}
               className="group flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-2 text-xs font-medium text-slate-300 transition-all hover:bg-slate-700 hover:text-white hover:border-pink-500/50 active:scale-95 disabled:opacity-50"
@@ -232,6 +231,8 @@ export default function Home() {
             </button>
           </div>
           <p className="text-slate-300">LangGraph 기반 실시간 스트리밍 챗봇</p>
+          <p className="text-slate-300">테스트 모드 추가 "/t [목적],[시나리오],[기대출력] 내용입력"</p>
+          <p className="text-slate-300">복사해서 쓰세요 /t [],[],[] </p>
         </header>
 
         <section className="min-h-[400px] rounded-2xl border border-slate-800 bg-white/5 p-6 shadow-lg shadow-slate-900/40">
@@ -244,9 +245,9 @@ export default function Home() {
             ))}
             {loading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex justify-start">
-                 <div className="rounded-2xl bg-slate-700/50 px-5 py-4 text-sm text-slate-400 animate-pulse">
-                   AI가 생각하고 있습니다... 💭
-                 </div>
+                <div className="rounded-2xl bg-slate-700/50 px-5 py-4 text-sm text-slate-400 animate-pulse">
+                  AI가 생각하고 있습니다... 💭
+                </div>
               </div>
             )}
           </div>

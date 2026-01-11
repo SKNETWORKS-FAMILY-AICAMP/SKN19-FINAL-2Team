@@ -20,6 +20,13 @@ class State(TypedDict):
     
     # 최종 응답
     final_response: str
+    
+    # [ksu] 토큰 사용량 누적 (비용 계산용)
+    input_tokens: int
+    output_tokens: int
+    
+    # [ksu] 테스트 정보 저장용 (목적, 시나리오, 기대값)
+    test_info: Optional[dict]
 
 # API 요청 바디
 class ChatRequest(BaseModel):

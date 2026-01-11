@@ -72,8 +72,17 @@ async def stream_generator(user_query: str, thread_id: str) -> AsyncGenerator[st
                     # final_response가 있으면 정답으로 전송
                     if "final_response" in state_update:
                         final_res = state_update["final_response"]
+
+                        # ================= [ksu] 토큰 사용량 전송 =================
+                        usage_data = {
+                            "input": state_update.get("input_tokens", 0),
+                            "output": state_update.get("output_tokens", 0)
+                        }
+                        # =======================================================
+                        
+                        # "usage": usage_data 추가
                         data = json.dumps(
-                            {"type": "answer", "content": final_res}, ensure_ascii=False
+                            {"type": "answer", "content": final_res, "usage": usage_data}, ensure_ascii=False
                         )
                         yield f"data: {data}\n\n"
                     

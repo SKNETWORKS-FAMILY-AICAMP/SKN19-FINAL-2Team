@@ -1,3 +1,9 @@
+# ====== [ksu] 테스터 ==========
+import os
+import time  # [추가] time 모듈 임포트
+from datetime import datetime
+# ============================
+
 import json
 import traceback
 import re
@@ -29,6 +35,44 @@ HIGH_PERFORMANCE_MODEL = "gpt-5.2"
 def supervisor(state: State) -> State:
     try:
         query = state["user_query"]
+
+        # ============================== [ksu] 테스터 =============================
+        test_info = None
+        # [👇 /t 명령어 처리 로직 추가됨]
+        if query.startswith("/t"):
+            try:
+                # 예: /t [목적],[시나리오],[기대값] 실제질문
+                # meta_part, real_query = query.split("]", 1)
+                # meta_part = meta_part.replace("/t", "").replace("[", "").strip()
+                # real_query = real_query.strip()
+                
+                # parts = [p.strip() for p in meta_part.split(",")]
+                # if len(parts) >= 3:
+                # 정규식으로 대괄호 [...] 안의 내용 추출
+                # 예: /t [목적],[시나리오],[기대값] 질문 -> ['목적', '시나리오', '기대값']
+                matches = re.findall(r"\[(.*?)\]", query)
+                
+                if len(matches) >= 3:
+                    test_info = {
+                        # "purpose": parts[0],
+                        # "scenario": parts[1],
+                        # "expected": parts[2]
+                        "purpose": matches[0].strip(),
+                        "scenario": matches[1].strip(),
+                        "expected": matches[2].strip(),
+                        "start_time": time.time() 
+                    }
+                    # query = real_query
+                    # [중요] 실제 질문 추출 (마지막 ']' 이후의 모든 텍스트)
+                    last_bracket_idx = query.rfind("]")
+                    if last_bracket_idx != -1:
+                        query = query[last_bracket_idx+1:].strip()
+                        
+                    print(f"🧪 [Test Mode] {test_info}", flush=True)
+            except Exception:
+                # pass
+                print("⚠️ 파싱 에러 발생", flush=True)
+        # ============================== [ksu] 테스터 =============================
         
         print(f"\n📡 [Supervisor] 입력: '{query}'", flush=True)
         
@@ -61,10 +105,26 @@ def supervisor(state: State) -> State:
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"}
         )
+
+        # ============== [ksu] 토큰 사용량 집계 =================
+        in_tok = msg.usage.prompt_tokens
+        out_tok = msg.usage.completion_tokens
+        current_in = state.get("input_tokens", 0) + in_tok
+        current_out = state.get("output_tokens", 0) + out_tok
+        # ===================================================
+
         route = safe_json_parse(msg.choices[0].message.content).get("route", "writer")
         
         print(f"   🚦 결정된 경로: {route}", flush=True)
-        return {"route": route}
+
+        # ============== [ksu] 토큰 정보도 함께 리턴 =================
+        # return {"route": route}
+        return {"route": route,
+                "input_tokens": current_in,
+                "output_tokens": current_out,
+                "user_query": query,            # [테스터] 파싱된 실제 질문
+                "test_info": test_info}         # [테스터] 테스트 메타데이터
+        # =======================================================
         
     except Exception:
         print("\n🚨 [Supervisor Error]", flush=True)
@@ -95,6 +155,12 @@ def interviewer(state: State) -> State:
             model=FAST_MODEL,
             messages=[{"role": "user", "content": extraction_prompt}]
         )
+
+        # ================= [ksu] 1차 토큰 집계 ======================
+        in_tok1 = msg.usage.prompt_tokens
+        out_tok1 = msg.usage.completion_tokens
+        # =========================================================
+
         updated_context = msg.choices[0].message.content
         print(f"   👉 업데이트된 정보: {updated_context}", flush=True)
         
@@ -133,6 +199,15 @@ def interviewer(state: State) -> State:
             messages=[{"role": "user", "content": judge_prompt}],
             response_format={"type": "json_object"}
         )
+
+        # ========================= [ksu] 2차 토큰 집계 및 최종 합산 =========================
+        in_tok2 = judge_msg.usage.prompt_tokens
+        out_tok2 = judge_msg.usage.completion_tokens
+        
+        total_in = state.get("input_tokens", 0) + in_tok1 + in_tok2
+        total_out = state.get("output_tokens", 0) + out_tok1 + out_tok2
+        # ===============================================================================
+
         judge_result = safe_json_parse(judge_msg.choices[0].message.content)
         
         if judge_result.get("is_sufficient"):
@@ -140,14 +215,18 @@ def interviewer(state: State) -> State:
             return {
                 "route": "researcher", 
                 "interview_context": updated_context,
-                "user_query": f"{updated_context} (사용자 의도 반영)" 
+                "user_query": f"{updated_context} (사용자 의도 반영)", 
+                "input_tokens": total_in, # [ksu] 토큰 사용량 누적
+                "output_tokens": total_out # [ksu] 토큰 사용량 누적
             }
         else:
             print("   ❓ 정보 부족 -> 사용자에게 재질문", flush=True)
             return {
                 "route": "end",
                 "interview_context": updated_context,
-                "final_response": judge_result.get("next_question")
+                "final_response": judge_result.get("next_question"),
+                "input_tokens": total_in, # [ksu] 토큰 사용량 누적
+                "output_tokens": total_out # [ksu] 토큰 사용량 누적
             }
             
     except Exception:
@@ -276,6 +355,15 @@ def researcher(state: State) -> State:
             response_format={"type": "json_object"}
         )
         
+        # ================= [ksu] Researcher 토큰 집계 =================
+        in_tok = msg.usage.prompt_tokens
+        out_tok = msg.usage.completion_tokens
+        
+        # 이전 단계(Supervisor 등)에서 넘어온 토큰에 더하기
+        total_in = state.get("input_tokens", 0) + in_tok
+        total_out = state.get("output_tokens", 0) + out_tok
+        # ================= [ksu] Researcher 토큰 집계 =================
+
         parsed = safe_json_parse(msg.choices[0].message.content)
         plans = parsed.get("plans", []) if parsed else []
         scenario_type = parsed.get("scenario_type", "Unknown")
@@ -334,7 +422,9 @@ def researcher(state: State) -> State:
             "search_plans": plans,
             "search_logs": search_logs,
             "research_result": final_result_text,
-            "route": "writer"
+            "route": "writer",
+            "input_tokens": total_in,    # [ksu] 토큰 사용량 누적
+            "output_tokens": total_out   # [ksu] 토큰 사용량 누적
         }
         
     except Exception:
@@ -346,6 +436,10 @@ def researcher(state: State) -> State:
 # ==========================================
 # 4. Writer (글쓰기) - 1전략 1향수 & 의도 설명
 # ==========================================
+# 원본 규칙
+# 459 : - 검색 결과가 없다면 반드시 검색된 결과가 없음을 알리고 다른 검색용 쿼리로 만들수 있을만한 질문을 던질 것.
+# 460 : - 절대로 임의의 향수를 추천하지 않을 것.
+
 def writer(state: State) -> State:
     try:
         print("✍️ [Writer] 답변 작성", flush=True)
@@ -362,43 +456,45 @@ def writer(state: State) -> State:
         
         [작성 규칙 - 필독]
         0. **검색결과에 따른 출력**:
-           - 검색 결과가 없다면 반드시 검색된 결과가 없음을 알리고 다른 검색용 쿼리로 만들수 있을만한 질문을 던질 것.
-           - 절대로 임의의 향수를 추천하지 않을 것.
-
+            - 검색 결과가 있다면: 아래 규칙들을 엄격히 따라 추천할 것.
+            - 검색 결과가 없다면:
+                - 사용자가 향수 추천을 원한 경우: "검색된 결과가 없어서 추천이 어렵다"고 솔직히 말하고, 취향을 다시 물어볼 것.
+                - 사용자가 '안녕', '고마워' 등 **단순 대화(Small Talk)**를 한 경우: **절대 DB나 검색 얘기를 꺼내지 말고** 자연스럽게 대화할 것. (앵무새 금지)
+        
         1. **[★1전략 1향수 원칙★]**: 
-           - 검색 결과에 여러 향수가 있더라도, **각 전략(Strategy) 당 가장 적합한 향수 딱 1개만** 선정하세요.
-           - 결과적으로 총 3개의 향수만 추천되어야 합니다. (중복 추천 금지)
-           - 단 출력시에 전략별로 딱 한개씩 추천한다는 내용을 직접적으로 언급하지 않도록 주의하세요.
+            - 검색 결과에 여러 향수가 있더라도, **각 전략(Strategy) 당 가장 적합한 향수 딱 1개만** 선정하세요.
+            - 결과적으로 총 3개의 향수만 추천되어야 합니다. (중복 추천 금지)
+            - 단 출력시에 전략별로 딱 한개씩 추천한다는 내용을 직접적으로 언급하지 않도록 주의하세요.
         
         2. **목차 스타일 (전략 의도 강조)**: 
-           - 형식: **`## 번호. [전략이름] 브랜드 - 향수명`**
-           - **[전략이름]**에는 Researcher가 정한 전략명(예: "겉차속따 반전 매력")을 그대로 넣되 전략: 등의 딱딱한 표현은 제외시키고 전략으 설명만 사용하세요.
-           - 예시: `## 1. [차가운 첫인상 속 따뜻한 반전] Chanel - Coco Noir`
+            - 형식: **`## 번호. [전략이름] 브랜드 - 향수명`**
+            - **[전략이름]**에는 Researcher가 정한 전략명(예: "겉차속따 반전 매력")을 그대로 넣되 전략: 등의 딱딱한 표현은 제외시키고 전략으 설명만 사용하세요.
+            - 예시: `## 1. [차가운 첫인상 속 따뜻한 반전] Chanel - Coco Noir`
         
         3. **이미지 필수**: `![향수명](이미지링크)`
         
         4. **[★매우 중요★] 서식 및 강조 규칙**:
-           - **항목 제목(Label)**: 반드시 **`_` (언더바)**로 감싸세요. (파란색 제목)
-             - 예: `_어떤 향인가요?_`, `_추천 이유_`, `_정보_`
-           - **내용 강조(Highlight)**: 핵심 단어는 **`**` (별표 2개)**로 감싸세요. (핑크색 강조)
-             - 예: `처음엔 **상큼한 귤 향**이 나요.`
+            - **항목 제목(Label)**: 반드시 **`_` (언더바)**로 감싸세요. (파란색 제목)
+            - 예: `_어떤 향인가요?_`, `_추천 이유_`, `_정보_`
+            - **내용 강조(Highlight)**: 핵심 단어는 **`**` (별표 2개)**로 감싸세요. (핑크색 강조)
+            - 예: `처음엔 **상큼한 귤 향**이 나요.`
         
         5. **구분선**: 향수 추천 사이에 `---` 삽입.
         
         6. **정보 표기**: 브랜드, 이름, 출시년도만 기재.
         
         7. **[★필수★] 향 설명 방식 (용어 절대 금지)**:
-           - **[절대 금지]**: '탑', '미들', '베이스', '노트', '어코드'라는 단어나 `(탑)`, `(미들)` 같은 괄호 표기를 **절대** 쓰지 마세요.
-           - **[작성법]**: 시간의 흐름을 자연스러운 문장으로만 표현하세요.
-           - **[예외상황]**:탑/미들/베이스의 노트가 모두 동일할 경우 전체적으로 ~~ 향이 지속된다는 식으로 설명하세요
-           - *Bad*: "처음에는 레몬 향이 나요(탑)."
-           - *Good*: "처음에는 **막 짠 레몬즙**처럼 상큼하게 시작해요. 시간이 지나면..."
+            - **[절대 금지]**: '탑', '미들', '베이스', '노트', '어코드'라는 단어나 `(탑)`, `(미들)` 같은 괄호 표기를 **절대** 쓰지 마세요.
+            - **[작성법]**: 시간의 흐름을 자연스러운 문장으로만 표현하세요.
+            - **[예외상황]**:탑/미들/베이스의 노트가 모두 동일할 경우 전체적으로 ~~ 향이 지속된다는 식으로 설명하세요
+            - *Bad*: "처음에는 레몬 향이 나요(탑)."
+            - *Good*: "처음에는 **막 짠 레몬즙**처럼 상큼하게 시작해요. 시간이 지나면..."
            
         8. **[핵심] 추천 논리 연결 (Why?)**:
-           - `_추천 이유_`를 작성할 때, **"왜 이 전략(반전/직관 등)으로 이 향수를 뽑았는지"** 설명하세요.
-           - 과한 마케팅 문구(예: "정석", "끝판왕", "감히 추천") 대신 **담백하고 논리적으로** 설득하세요.
-           - *Bad*: "시크함의 정석이라 감히 추천드려요."
-           - *Good*: "고객님이 **시크한 이미지**를 원하셨죠? 이 향은 **단맛 없이 건조한 나무 향**이라 깔끔하고 도시적인 느낌을 주기에 가장 적합해요."
+            - `_추천 이유_`를 작성할 때, **"왜 이 전략(반전/직관 등)으로 이 향수를 뽑았는지"** 설명하세요.
+            - 과한 마케팅 문구(예: "정석", "끝판왕", "감히 추천") 대신 **담백하고 논리적으로** 설득하세요.
+            - *Bad*: "시크함의 정석이라 감히 추천드려요."
+            - *Good*: "고객님이 **시크한 이미지**를 원하셨죠? 이 향은 **단맛 없이 건조한 나무 향**이라 깔끔하고 도시적인 느낌을 주기에 가장 적합해요."
 
         9. **[매우 중요] 묘사 및 강조 규칙**:
             - **전문 용어 금지**: 노트, 어코드, 탑/미들/베이스 등은 쓰지 마세요.
@@ -428,12 +524,74 @@ def writer(state: State) -> State:
             messages=[{"role": "user", "content": prompt}]
         )
         
+        # ================= [ksu] Writer 토큰 집계 =================
+        in_tok = msg.usage.prompt_tokens
+        out_tok = msg.usage.completion_tokens
+        
+        total_in = state.get("input_tokens", 0) + in_tok
+        total_out = state.get("output_tokens", 0) + out_tok
+        # ================= [ksu] Writer 토큰 집계 =================
+
         raw_content = msg.choices[0].message.content
         
         # [후처리] 강조 공백 제거
         fixed_content = re.sub(r'\*\*\s*(.*?)\s*\*\*', r'**\1**', raw_content)
         
-        return {"final_response": fixed_content}
+        # ================= [ksu] 테스터 리포트 저장 로직 =================
+        test_info = state.get("test_info")
+        if test_info:
+            try:
+                report_dir = "test_reports"
+                os.makedirs(report_dir, exist_ok=True)
+                
+                today = datetime.now().strftime("%Y-%m-%d")
+                report_file = os.path.join(report_dir, f"test_{today}.md")
+                
+                # 비용 & 시간 계산
+                cost = (total_in * 1.75 + total_out * 14.00) / 1_000_000
+                
+                start_ts = test_info.get("start_time", time.time()) # 시작 시간 가져오기
+                duration = round(time.time() - start_ts, 2)         # 걸린 시간 계산
+                
+                # 헤더 생성 (11개 컬럼 복구)
+                if not os.path.exists(report_file):
+                    headers = [
+                        "시간", "목적", "시나리오", "환경", 
+                        "입력", "기대값", "실제출력(요약)", 
+                        "소요시간(초)", "비용($)", "토큰(In/Out)", "분석/비고"
+                    ]
+                    with open(report_file, "w", encoding="utf-8") as f:
+                        f.write(f"# 🧪 Chat Test Report ({today})\n\n")
+                        f.write("| " + " | ".join(headers) + " |\n")
+                        f.write("|" + "---|" * len(headers) + "\n")
+                # 행 추가
+                now_time = datetime.now().strftime("%H:%M:%S")
+                summary = fixed_content[:50].replace("\n", " ") + "..."
+                row = [
+                    now_time,
+                    test_info['purpose'],
+                    test_info['scenario'],
+                    "Chat/GPT-5.2",
+                    query,
+                    test_info['expected'],
+                    summary,
+                    f"{duration}s",        # [추가됨]
+                    f"${round(cost, 6)}",
+                    f"{total_in}/{total_out}",
+                    ""                     # [추가됨] 비고
+                ]
+                with open(report_file, "a", encoding="utf-8") as f:
+                    f.write("| " + " | ".join([str(x) for x in row]) + " |\n")
+                    
+                print(f"📝 [Test Report] 기록 완료", flush=True)
+            except Exception as e:
+                print(f"⚠️ [Report Error] {e}", flush=True)
+        # ========================= [ksu] 테스터 리포트 저장 로직 =========================
+
+        return {"final_response": fixed_content,
+                "input_tokens": total_in,   # [ksu] 토큰 사용량 누적
+                "output_tokens": total_out}  # [ksu] 토큰 사용량 누적
+        
     except Exception:
         print("\n🚨 [Writer Error]", flush=True)
         traceback.print_exc()
@@ -465,7 +623,8 @@ def build_graph():
     graph.add_conditional_edges(
         "interviewer",
         route_decision,
-        {"researcher": "researcher", "end": END}
+        # {"researcher": "researcher", "end": END}
+        {"researcher": "researcher", "writer": "writer", "end": END}
     )
     
     graph.add_edge("researcher", "writer")

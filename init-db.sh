@@ -14,9 +14,10 @@ $PSQL -c "CREATE DATABASE member_db;" || echo "member_db 이미 존재"
 $PSQL -c "CREATE DATABASE perfume_db;" || echo "perfume_db 이미 존재"
 $PSQL -c "CREATE DATABASE recom_db;" || echo "recom_db 이미 존재"
 
-# 2. pgvector 확장 활성화 
-echo "pgvector 확장 활성화"
+# 2. pgvector 및 오타 보정 확장 활성화 
+echo "DB 확장 기능 활성화"
 psql -U scentence -d perfume_db -c "CREATE EXTENSION IF NOT EXISTS vector;" || echo "vector 확장 이미 존재"
+psql -U scentence -d perfume_db -c "CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;" || echo "fuzzystrmatch 확장 이미 존재"
 
 # 3. MEMBER_DB 테이블 생성
 echo "MEMBER_DB 테이블 생성"
