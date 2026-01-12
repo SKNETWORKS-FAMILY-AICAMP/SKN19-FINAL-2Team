@@ -8,6 +8,7 @@ from database import get_db_connection
 
 client = OpenAI()
 
+
 # ==========================================
 # 1. 유틸리티 함수
 # ==========================================
@@ -21,6 +22,7 @@ def safe_json_parse(text: str, default=None):
         return json.loads(json_match.group()) if json_match else json.loads(text)
     except:
         return default
+
 
 def get_embedding(text):
     try:
@@ -36,6 +38,7 @@ def get_embedding(text):
         traceback.print_exc()
         return []
 
+
 # ==========================================
 # 2. 데이터 가공 헬퍼 함수
 # ==========================================
@@ -45,22 +48,23 @@ def filter_by_votes(data_list, threshold_ratio=0.10):
     """
     if not data_list or data_list == [None]:
         return "정보 없음"
-    
-    valid_items = [d for d in data_list if d and d.get('vote') is not None]
+
+    valid_items = [d for d in data_list if d and d.get("vote") is not None]
     if not valid_items:
         return "정보 없음"
 
-    total_votes = sum(item['vote'] for item in valid_items)
+    total_votes = sum(item["vote"] for item in valid_items)
     if total_votes == 0:
         return "정보 없음"
 
     filtered = []
     for item in valid_items:
-        ratio = item['vote'] / total_votes
-        if ratio >= threshold_ratio: 
+        ratio = item["vote"] / total_votes
+        if ratio >= threshold_ratio:
             filtered.append(f"{item['name']}")
-    
+
     return ", ".join(filtered) if filtered else "정보 없음"
+
 
 def format_notes(notes_json):
     """
@@ -68,64 +72,79 @@ def format_notes(notes_json):
     """
     if not notes_json or notes_json == [None]:
         return "정보 없음"
-    
+
     structure = {"TOP": [], "MIDDLE": [], "BASE": [], "SINGLE": []}
-    
+
     for n in notes_json:
-        if not n or not n.get('name'): continue
-        n_type = n.get('type', 'SINGLE')
+        if not n or not n.get("name"):
+            continue
+        n_type = n.get("type", "SINGLE")
         if n_type:
             n_type = n_type.upper()
         else:
             n_type = "SINGLE"
-            
+
         if n_type not in structure:
             n_type = "SINGLE"
-        structure[n_type].append(n['name'])
-        
+        structure[n_type].append(n["name"])
+
     result = []
-    if structure["TOP"]: result.append(f"   [Top]: {', '.join(structure['TOP'])}")
-    if structure["MIDDLE"]: result.append(f"   [Middle]: {', '.join(structure['MIDDLE'])}")
-    if structure["BASE"]: result.append(f"   [Base]: {', '.join(structure['BASE'])}")
-    if structure["SINGLE"] and not result: result.append(f"   [Notes]: {', '.join(structure['SINGLE'])}")
-    
+    if structure["TOP"]:
+        result.append(f"   [Top]: {', '.join(structure['TOP'])}")
+    if structure["MIDDLE"]:
+        result.append(f"   [Middle]: {', '.join(structure['MIDDLE'])}")
+    if structure["BASE"]:
+        result.append(f"   [Base]: {', '.join(structure['BASE'])}")
+    if structure["SINGLE"] and not result:
+        result.append(f"   [Notes]: {', '.join(structure['SINGLE'])}")
+
     return "\n".join(result)
+
 
 # ==========================================
 # 3. 검색 함수들
 # ==========================================
 
+
 def search_exact_entity(keyword: str, entity_type: str) -> str | None:
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
+
         table = "tb_perfume_basic_m"
         col = "perfume_brand" if entity_type == "brand" else "perfume_name"
-        
-        cur.execute(f"SELECT {col} FROM {table} WHERE {col} ILIKE %s LIMIT 1", (keyword,))
+
+        cur.execute(
+            f"SELECT {col} FROM {table} WHERE {col} ILIKE %s LIMIT 1", (keyword,)
+        )
         row = cur.fetchone()
         conn.close()
-        
+
         return row[0] if row else None
     except Exception:
         return None
+
 
 def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
     results = []
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
+
         # 1. Exact Match
-        cur.execute("SELECT note FROM tb_note_embedding_m WHERE note ILIKE %s LIMIT %s", (f"%{keyword}%", top_k))
+        cur.execute(
+            "SELECT note FROM tb_note_embedding_m WHERE note ILIKE %s LIMIT %s",
+            (f"%{keyword}%", top_k),
+        )
         results.extend([r[0] for r in cur.fetchall()])
-        
+
         # 2. Levenshtein (Typo)
         if len(results) < top_k:
             exclude_sql = ""
             if results:
-                formatted = "'" + "','".join([r.replace("'", "''") for r in results]) + "'"
+                formatted = (
+                    "'" + "','".join([r.replace("'", "''") for r in results]) + "'"
+                )
                 exclude_sql = f"AND note NOT IN ({formatted})"
 
             try:
@@ -141,7 +160,7 @@ def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
                 cur.execute(sql_typo, (keyword, keyword, top_k - len(results)))
                 results.extend([r[0] for r in cur.fetchall()])
             except Exception:
-                conn.rollback() 
+                conn.rollback()
 
         # 3. Vector Search
         if len(results) < top_k:
@@ -149,9 +168,11 @@ def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
             if query_vector:
                 exclude_sql = ""
                 if results:
-                    formatted = "'" + "','".join([r.replace("'", "''") for r in results]) + "'"
+                    formatted = (
+                        "'" + "','".join([r.replace("'", "''") for r in results]) + "'"
+                    )
                     exclude_sql = f"AND note NOT IN ({formatted})"
-                
+
                 sql_vector = f"""
                     SELECT note 
                     FROM tb_note_embedding_m 
@@ -161,7 +182,7 @@ def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
                 """
                 cur.execute(sql_vector, (query_vector, top_k - len(results)))
                 results.extend([r[0] for r in cur.fetchall()])
-            
+
         conn.close()
         return list(set(results))
 
@@ -170,53 +191,91 @@ def search_notes_vector(keyword: str, top_k: int = 3) -> list[str]:
         traceback.print_exc()
         return []
 
+
 # tools.py 내부 execute_precise_search 함수 전체 교체
+
+# tools.py
+
 
 def execute_precise_search(filters: list[dict]) -> str | None:
     if not filters:
         return None
 
-    # --- 쿼리 실행 내부 함수 ---
+    # --- [수정됨] 쿼리 실행 내부 함수 ---
     def _run_query(current_filters):
         conn = None
         try:
             conn = get_db_connection()
             cur = conn.cursor(cursor_factory=DictCursor)
-            where_clauses, params = [], []
-            
+
+            # [Step 1] 같은 컬럼끼리 값 모으기 (Grouping)
+            # 예: accord가 'Fresh', 'Aquatic' 두 개면 -> {'accord': ['Fresh', 'Aquatic']}
+            from collections import defaultdict
+
+            grouped_filters = defaultdict(list)
+
             for f in current_filters:
                 col = f.get("column", "").lower().strip()
                 val = f.get("value")
-                if not col or not val: continue
+                if not col or not val:
+                    continue
+
+                # Note 등 값이 리스트로 들어오는 경우와 단일 값인 경우 모두 처리
+                if isinstance(val, list):
+                    grouped_filters[col].extend(val)
+                else:
+                    grouped_filters[col].append(val)
+
+            where_clauses = []
+            params = []
+
+            # [Step 2] SQL 생성 (IN 연산자 사용으로 논리 오류 해결)
+            for col, vals in grouped_filters.items():
+                if not vals:
+                    continue
+
+                # 중복 제거
+                vals = list(set(vals))
+
+                # 플레이스홀더 생성 (%s, %s, ...)
+                placeholders = ",".join(["%s"] * len(vals))
 
                 if col == "brand":
-                    where_clauses.append("AND b.perfume_brand ILIKE %s")
-                    params.append(val)
-                elif col in ["perfume_name", "name"]:
-                    where_clauses.append("AND b.perfume_name ILIKE %s")
-                    params.append(f"%{val}%")
-                elif col == "note":
-                    if isinstance(val, list) and val:
-                        placeholders = ",".join(["%s"] * len(val))
-                        where_clauses.append(f"AND n.note IN ({placeholders})")
-                        params.extend(val)
-                    else:
-                        where_clauses.append("AND n.note = %s")
-                        params.append(val)
-                elif col == "accord":
-                    where_clauses.append("AND ac.accord = %s")
-                    params.append(val)
-                elif col == "season":
-                    where_clauses.append("AND s.season = %s")
-                    params.append(val)
-                elif col == "gender":
-                    where_clauses.append("AND a.audience = %s")
-                    params.append(val)
-                elif col == "occasion":
-                    where_clauses.append("AND o.occasion = %s")
-                    params.append(val)
+                    # 브랜드도 여러 개일 수 있으니 IN 처리
+                    where_clauses.append(f"AND b.perfume_brand IN ({placeholders})")
+                    params.extend(vals)
 
-            # 테이블명: aud_m, oca_m 반영됨
+                elif col in ["perfume_name", "name"]:
+                    # 이름 검색은 부분 일치(ILIKE)가 필요하므로 OR 구문으로 직접 연결
+                    # (name ILIKE %s OR name ILIKE %s)
+                    or_clauses = [f"b.perfume_name ILIKE %s" for _ in vals]
+                    where_clauses.append(f"AND ({' OR '.join(or_clauses)})")
+                    params.extend([f"%{v}%" for v in vals])
+
+                elif col == "note":
+                    # 노트: 조인된 테이블(n)에서 해당 노트들 중 하나라도 포함되면 검색
+                    where_clauses.append(f"AND n.note IN ({placeholders})")
+                    params.extend(vals)
+
+                elif col == "accord":
+                    # [핵심 수정] accord = 'A' AND accord = 'B' (X) -> accord IN ('A', 'B') (O)
+                    where_clauses.append(f"AND ac.accord IN ({placeholders})")
+                    params.extend(vals)
+
+                elif col == "season":
+                    where_clauses.append(f"AND s.season IN ({placeholders})")
+                    params.extend(vals)
+
+                elif col == "gender":
+                    where_clauses.append(f"AND a.audience IN ({placeholders})")
+                    params.extend(vals)
+
+                elif col == "occasion":
+                    where_clauses.append(f"AND o.occasion IN ({placeholders})")
+                    params.extend(vals)
+
+            # [Step 3] 쿼리 조립
+            # 테이블명: aud_m, oca_m 등 사용자의 DB 구조 반영
             sql = f"""
                 SELECT 
                     b.perfume_id, b.perfume_name, b.perfume_brand, b.img_link, b.perfumer, b.release_year,
@@ -242,7 +301,8 @@ def execute_precise_search(filters: list[dict]) -> str | None:
             traceback.print_exc()
             return None
         finally:
-            if conn: conn.close()
+            if conn:
+                conn.close()
 
     # =========================================================================
     # [Step 1] Strict Search: 모든 조건(브랜드,노트,어코드,계절,상황) 포함
@@ -256,9 +316,10 @@ def execute_precise_search(filters: list[dict]) -> str | None:
     # =========================================================================
     if not results:
         # 1차 완화: Season, Occasion 제거 -> 향기는 유지
-        context_columns = ['season', 'occasion']
-        filters_step2 = [f for f in filters if f['column'] not in context_columns]
-        
+        context_columns = ["season", "occasion"]
+        filters_step2 = [f for f in filters if f["column"] not in context_columns]
+
+        # 필터가 줄어들었을 때만 재검색 (똑같으면 할 필요 없음)
         if len(filters_step2) < len(filters):
             print(f"⚠️ [Step 2] Ignore Context: {filters_step2}", flush=True)
             results = _run_query(filters_step2)
@@ -270,12 +331,15 @@ def execute_precise_search(filters: list[dict]) -> str | None:
             # =========================================================================
             if not results:
                 # 2차 완화: Note 제거, Accord는 유지
-                filters_step3 = [f for f in filters_step2 if f['column'] != 'note']
-                
+                filters_step3 = [f for f in filters_step2 if f["column"] != "note"]
+
                 # Accord 조건이 남아있을 때만 실행 (분위기는 맞춰줘야 하므로)
-                has_accord = any(f['column'] == 'accord' for f in filters_step3)
+                has_accord = any(f["column"] == "accord" for f in filters_step3)
                 if len(filters_step3) < len(filters_step2) and has_accord:
-                    print(f"⚠️ [Step 3] Broad Scent (Accord Only): {filters_step3}", flush=True)
+                    print(
+                        f"⚠️ [Step 3] Broad Scent (Accord Only): {filters_step3}",
+                        flush=True,
+                    )
                     results = _run_query(filters_step3)
                     search_mode = "broad_scent"
 
@@ -283,30 +347,39 @@ def execute_precise_search(filters: list[dict]) -> str | None:
                 # [Step 4] Emergency: 어코드도 없으면 -> 브랜드 베스트셀러
                 # =========================================================================
                 if not results:
-                    filters_step4 = [f for f in filters_step2 if f['column'] in ['brand', 'gender']]
-                    if any(f['column'] == 'brand' for f in filters_step4):
-                        print(f"🚨 [Step 4] Emergency (Brand Only): {filters_step4}", flush=True)
+                    filters_step4 = [
+                        f for f in filters_step2 if f["column"] in ["brand", "gender"]
+                    ]
+                    if any(f["column"] == "brand" for f in filters_step4):
+                        print(
+                            f"🚨 [Step 4] Emergency (Brand Only): {filters_step4}",
+                            flush=True,
+                        )
                         results = _run_query(filters_step4)
                         search_mode = "emergency"
 
     if not results:
         return None
 
-    # 결과 메시지 조합
+    # 결과 메시지 조합 (search_mode에 따라 경고 문구 추가)
     result_txt = ""
     if search_mode == "relaxed_context":
-        result_txt += "🚨 (계절/상황 조건이 맞지 않아, 향기(노트/분위기) 위주로 검색했습니다)\n\n"
+        result_txt += (
+            "🚨 (계절/상황 조건이 맞지 않아, 향기(노트/분위기) 위주로 검색했습니다)\n\n"
+        )
     elif search_mode == "broad_scent":
-        result_txt += "🚨 (정확한 노트가 없어, 비슷한 분위기(Accord)의 향수를 추천합니다)\n\n"
+        result_txt += (
+            "🚨 (정확한 노트가 없어, 비슷한 분위기(Accord)의 향수를 추천합니다)\n\n"
+        )
     elif search_mode == "emergency":
         result_txt += "🚨 (원하시는 향 정보를 찾을 수 없어, 해당 브랜드의 대표 향수를 보여드립니다)\n\n"
 
     for i, r in enumerate(results, 1):
-        clean_accords = filter_by_votes(r['accords_json'], threshold_ratio=0.10)
-        clean_seasons = filter_by_votes(r['season_json'], threshold_ratio=0.15)
-        clean_gender = filter_by_votes(r['gender_json'], threshold_ratio=0.10)
-        clean_occasion = filter_by_votes(r['occasion_json'], threshold_ratio=0.10)
-        formatted_notes = format_notes(r['notes_json'])
+        clean_accords = filter_by_votes(r["accords_json"], threshold_ratio=0.10)
+        clean_seasons = filter_by_votes(r["season_json"], threshold_ratio=0.15)
+        clean_gender = filter_by_votes(r["gender_json"], threshold_ratio=0.10)
+        clean_occasion = filter_by_votes(r["occasion_json"], threshold_ratio=0.10)
+        formatted_notes = format_notes(r["notes_json"])
 
         result_txt += f"no.{i}\n"
         result_txt += f"브랜드: {r['perfume_brand']}\n"

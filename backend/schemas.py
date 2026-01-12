@@ -26,9 +26,12 @@ class State(TypedDict):
     input_tokens: int
     output_tokens: int
 
-    # [ksu] 테스트 정보 저장용 (목적, 시나리오, 기대값)
+    # [ksu] 테스트 정보 저장용
     test_info: Optional[dict]
     retry_count: int
+
+    # [★NEW] 대화 주도권 (None: 자유 / "interviewer": 인터뷰 중)
+    active_mode: Optional[str]
 
 
 # API 요청 바디
