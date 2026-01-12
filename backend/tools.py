@@ -26,7 +26,7 @@ def get_embedding(text):
     try:
         return (
             client.embeddings.create(
-                input=text.replace("\n", " "), model="text-embedding-3-small"
+                input=text.replace("\n", " "), model="text-embedding-3-small", dimensions=1536
             )
             .data[0]
             .embedding

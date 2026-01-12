@@ -59,7 +59,10 @@ def supervisor(state: State) -> State:
         msg = client.chat.completions.create(
             model=FAST_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            top_p=0.9,
+            max_tokens=500
         )
         route = safe_json_parse(msg.choices[0].message.content).get("route", "writer")
         
@@ -93,7 +96,10 @@ def interviewer(state: State) -> State:
         """
         msg = client.chat.completions.create(
             model=FAST_MODEL,
-            messages=[{"role": "user", "content": extraction_prompt}]
+            messages=[{"role": "user", "content": extraction_prompt}],
+            temperature=0.3,
+            top_p=0.9,
+            max_tokens=500
         )
         updated_context = msg.choices[0].message.content
         print(f"   👉 업데이트된 정보: {updated_context}", flush=True)
@@ -131,7 +137,10 @@ def interviewer(state: State) -> State:
         judge_msg = client.chat.completions.create(
             model=FAST_MODEL,
             messages=[{"role": "user", "content": judge_prompt}],
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            top_p=0.9,
+            max_tokens=500
         )
         judge_result = safe_json_parse(judge_msg.choices[0].message.content)
         
@@ -273,7 +282,10 @@ def researcher(state: State) -> State:
         msg = client.chat.completions.create(
             model=HIGH_PERFORMANCE_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            top_p=0.9,
+            max_tokens=500
         )
         
         parsed = safe_json_parse(msg.choices[0].message.content)
@@ -425,7 +437,10 @@ def writer(state: State) -> State:
         
         msg = client.chat.completions.create(
             model=HIGH_PERFORMANCE_MODEL, 
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            top_p=0.9,
+            max_tokens=500
         )
         
         raw_content = msg.choices[0].message.content
