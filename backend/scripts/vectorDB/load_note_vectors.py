@@ -6,24 +6,23 @@ from psycopg2.extras import execute_batch
 # ==========================================
 # 1. 파일 경로 및 DB 설정
 # ==========================================
-# 현재 파일(load_note_vectors.py)의 위치 기준
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# JSON 파일 경로: /backend/script/vectorDB/raw/notes_vector_db_ready.json
-JSON_FILE_PATH = os.path.join(CURRENT_DIR, "raw", "notes_vector_db_ready.json")
+# [수정] 확장된 데이터 파일 경로 사용
+JSON_FILE_PATH = os.path.join(CURRENT_DIR, "raw", "notes_vector_db_ready_expanded.json")
 
-# DB 접속 설정 (로컬 실행 시 localhost:5433, 도커 내부 실행 시 db:5432)
+# DB 접속 정보
 DB_CONFIG = {
     "dbname": "perfume_db",
     "user": "scentence",
     "password": "scentence",
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": os.getenv("DB_PORT", "5433") 
+    "host": os.getenv("DB_HOST", "db"),
+    "port": os.getenv("DB_PORT", "5432")
 }
 
 TABLE_NAME = "tb_note_embedding_m"
 
 def load_vector_data():
-    print("🚀 노트 임베딩 데이터 적재 시작")
+    print(f"🚀 [Expanded] 노트 임베딩 데이터 적재 시작: {JSON_FILE_PATH}")
     
     # 1. JSON 파일 읽기
     if not os.path.exists(JSON_FILE_PATH):
@@ -43,8 +42,14 @@ def load_vector_data():
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
 
-        # 2. 테이블 생성 (vector 컬럼 포함!)
-        # note 컬럼에 UNIQUE 제약조건을 걸어 중복 적재를 방지합니다.
+        # [★중요 추가] 0. pgvector 확장 및 테이블 생성 확인
+        # 볼륨을 날렸으므로 테이블도 다시 만들어야 합니다.
+        print("🛠️ 테이블 및 벡터 확장 확인 중...")
+        
+        # 벡터 익스텐션 활성화 (혹시 모르니)
+        cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        
+        # 테이블 생성
         create_table_sql = f"""
             CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
                 id SERIAL PRIMARY KEY,
@@ -55,34 +60,45 @@ def load_vector_data():
             );
         """
         cur.execute(create_table_sql)
-        print("✅ 테이블 생성/확인 완료 (embedding vector(1536) 포함)")
+        conn.commit()
 
-        # 3. 데이터 적재 (Batch Insert)
+        # 2. 기존 데이터 초기화 (TRUNCATE)
+        print("🧹 기존 데이터 삭제 중 (TRUNCATE)...")
+        cur.execute(f"TRUNCATE TABLE {TABLE_NAME};")
+        conn.commit()
+
+        # 3. 데이터 적재 (INSERT)
         insert_sql = f"""
             INSERT INTO {TABLE_NAME} (note, description, embedding)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (note) 
-            DO UPDATE SET
-                description = EXCLUDED.description,
-                embedding = EXCLUDED.embedding;
+            VALUES (%s, %s, %s);
         """
 
-        # JSON 데이터를 튜플 리스트로 변환
         records = []
         for item in data:
-            # item['semantic_vector']가 리스트인지 확인
-            vector = item.get('semantic_vector')
-            if not vector or len(vector) != 1536:
-                print(f"⚠️ 경고: {item.get('note')}의 벡터 차원이 1536이 아닙니다. 건너뜁니다.")
+            note = item.get('note')
+            description = item.get('description_en') 
+            vector = item.get('embedding')
+
+            if vector is None:
+                vector = item.get('semantic_vector')
+
+            if not vector:
+                print(f"⚠️ 경고: {note}의 벡터 데이터가 없습니다.")
                 continue
+
+            if description is None:
+                description = ""
+
+            if isinstance(vector, str):
+                try:
+                    vector = json.loads(vector)
+                except:
+                    continue
                 
-            records.append((
-                item.get('note'),
-                item.get('description'),
-                vector  # 리스트 그대로 넘기면 pgvector가 알아서 처리함
-            ))
+            records.append((note, description, vector))
 
         if records:
+            print(f"🚀 데이터 삽입 시작 ({len(records)}건)...")
             execute_batch(cur, insert_sql, records)
             conn.commit()
             print(f"🎉 데이터 적재 완료: 총 {len(records)}건")

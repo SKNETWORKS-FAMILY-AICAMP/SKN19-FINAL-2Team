@@ -1,17 +1,14 @@
 import json
-import asyncio
-from typing import Any, Generator
+import traceback
+from typing import Any, AsyncGenerator
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel # 👈 Pydantic 모델 직접 정의를 위해 추가
 
-# main_v3.py에서 그래프 가져오기
-from main_v3 import build_graph
-
-class ChatRequest(BaseModel):
-    user_query: str = Field(..., min_length=1, description="사용자가 입력한 질의")
+# graph.py에서 빌드된 그래프 가져오기
+from graph import build_graph
 
 app = FastAPI(title="Perfume Chat Workflow")
 
@@ -25,50 +22,86 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 그래프 빌드
+# 1. 그래프 빌드 (MemorySaver가 graph.py에 포함되어 있어야 함)
 workflow = build_graph()
+
+# 2. 요청 데이터 모델 정의 (thread_id 필수)
+# schemas.py를 안 쓰고 여기서 바로 정의해도 됩니다.
+class ChatRequest(BaseModel):
+    user_query: str
+    thread_id: str
 
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {"status": "ok"}
 
-def stream_generator(user_query: str) -> Generator[str, None, None]:
-    """LangGraph 실행 결과를 실시간 SSE 포맷으로 전송"""
-    payload = {"user_query": user_query}
+# 3. 스트리밍 제너레이터 수정 (비동기 async 적용)
+async def stream_generator(user_query: str, thread_id: str) -> AsyncGenerator[str, None]:
+    """LangGraph 실행 결과를 SSE 포맷으로 실시간 전송"""
     
-    try:
-        # workflow.stream은 노드(단계)가 끝날 때마다 상태를 반환합니다.
-        for event in workflow.stream(payload):
-            for node_name, state_update in event.items():
-                
-                # 1. Researcher 단계: 조사 결과가 있으면 로그 전송
-                if node_name == "researcher" and "research_result" in state_update:
-                    log_data = json.dumps({
-                        "type": "log",
-                        "content": f"🔎 조사 완료: {state_update['research_result'][:30]}..."
-                    }, ensure_ascii=False)
-                    yield f"data: {log_data}\n\n"
+    # LangGraph에 전달할 입력값
+    inputs = {
+        "user_query": user_query,
+        # 'messages'나 'history'는 MemorySaver가 알아서 관리하므로 넣지 않아도 됩니다.
+    }
+    
+    # 👇 [핵심] 스레드 ID를 설정에 넣어줘야 기억을 찾습니다.
+    config = {"configurable": {"thread_id": thread_id}}
 
-                # 2. Writer 단계: 최종 답변이 있으면 전송
-                # (LangGraph 특성상 Writer 노드가 완료되어야 텍스트가 나옵니다)
-                if node_name == "writer" and "final_response" in state_update:
-                    final_res = state_update["final_response"]
+    try:
+        # workflow.stream 대신 .astream 사용 (비동기)
+        async for event in workflow.astream(inputs, config=config):
+            for node_name, state_update in event.items():
+
+                # 1. Researcher 로그 전송 (기존 로직 유지)
+                if node_name == "researcher" and "search_logs" in state_update:
+                    logs = state_update["search_logs"]
+                    if logs:
+                        log_content = logs[-1]
+                        log_data = json.dumps(
+                            {
+                                "type": "log",
+                                "content": f"🔎 {log_content[:40]}...",
+                            },
+                            ensure_ascii=False,
+                        )
+                        yield f"data: {log_data}\n\n"
+
+                # 2. Writer 또는 Interviewer의 최종 텍스트 전송
+                if node_name in ["writer", "interviewer", "supervisor"]:
+                    # final_response가 있으면 정답으로 전송
+                    if "final_response" in state_update:
+                        final_res = state_update["final_response"]
+
+                        # ================= [ksu] 토큰 사용량 전송 =================
+                        usage_data = {
+                            "input": state_update.get("input_tokens", 0),
+                            "output": state_update.get("output_tokens", 0)
+                        }
+                        # =======================================================
+                        
+                        # "usage": usage_data 추가
+                        data = json.dumps(
+                            {"type": "answer", "content": final_res, "usage": usage_data}, ensure_ascii=False
+                        )
+                        yield f"data: {data}\n\n"
                     
-                    # 프론트엔드에서 '타자 치는 효과'를 위해 전체 텍스트를 보냄
-                    data = json.dumps({
-                        "type": "answer",
-                        "content": final_res
-                    }, ensure_ascii=False)
-                    yield f"data: {data}\n\n"
+                    # Supervisor가 질문이 부족해서 바로 끝내는 경우 등 처리
+                    elif "final_response" not in state_update and node_name == "interviewer":
+                         pass 
 
     except Exception as e:
+        print(f"\n🚨 [Main Stream Error] 🚨")
+        traceback.print_exc()
+        
         error_msg = json.dumps({"type": "error", "content": str(e)}, ensure_ascii=False)
         yield f"data: {error_msg}\n\n"
 
+
 @app.post("/chat")
 async def chat_stream(request: ChatRequest):
-    """스트리밍 엔드포인트"""
+    # stream_generator에 thread_id 전달
     return StreamingResponse(
-        stream_generator(request.user_query),
+        stream_generator(request.user_query, request.thread_id), 
         media_type="text/event-stream"
     )
