@@ -8,7 +8,7 @@ from psycopg2.extras import execute_batch
 # ==========================================
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 # [수정] 확장된 데이터 파일 경로 사용
-JSON_FILE_PATH = os.path.join(CURRENT_DIR, "raw", "notes_vector_db_ready_expanded.json")
+JSON_FILE_PATH = os.path.join(CURRENT_DIR, "raw", "notes_vector_db_ready_expanded_plus.json")
 
 # DB 접속 정보
 DB_CONFIG = {
