@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+typing-extensions
+psycopg2-binary
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langgraph
+langsmith
+openai
+Levenshtein
+passlib[bcrypt]
+pytest

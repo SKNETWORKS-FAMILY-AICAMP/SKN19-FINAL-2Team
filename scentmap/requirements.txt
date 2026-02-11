@@ -1,0 +1,28 @@
+# FastAPI 관련
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+slowapi>=0.1.9  # [개선] Rate Limiting
+
+# 환경 변수 관리
+python-dotenv==1.0.0
+
+# 타입 확장
+typing-extensions==4.9.0
+
+# 데이터베이스
+psycopg2-binary==2.9.9
+
+# HTTP 클라이언트 (필요시)
+httpx==0.26.0
+requests
+
+# 데이터 검증 및 처리
+python-multipart==0.0.6
+
+# 고속 JSON 직렬화 (성능 개선)
+orjson==3.9.15
+
+# OpenAI API (LLM 카드 생성)
+openai>=1.0.0

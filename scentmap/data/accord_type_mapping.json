@@ -1,0 +1,132 @@
+{
+  "accord_types": {
+    "Musk": {
+      "type_name": "포근한 안식처",
+      "harmonious_accords": ["Powdery", "Vanilla", "Cotton"],
+      "avoid_accords": ["Citrus", "Spicy"]
+    },
+    "Citrus": {
+      "type_name": "에너제틱 라이프",
+      "harmonious_accords": ["Fresh", "Aromatic", "Green"],
+      "avoid_accords": ["Oriental", "Amber"]
+    },
+    "Woody": {
+      "type_name": "단단한 내면의 숲",
+      "harmonious_accords": ["Earthy", "Resinous", "Aromatic"],
+      "avoid_accords": ["Fruity", "Aquatic"]
+    },
+    "Floral": {
+      "type_name": "우아한 정원의 주인공",
+      "harmonious_accords": ["Powdery", "Fruity", "Green"],
+      "avoid_accords": ["Leather", "Animalic"]
+    },
+    "Fresh": {
+      "type_name": "청량한 아침의 공기",
+      "harmonious_accords": ["Aquatic", "Citrus", "Ozonic"],
+      "avoid_accords": ["Oriental", "Spicy"]
+    },
+    "Oriental": {
+      "type_name": "신비로운 밤의 여정",
+      "harmonious_accords": ["Amber", "Spicy", "Vanilla"],
+      "avoid_accords": ["Fresh", "Citrus"]
+    },
+    "Animalic": {
+      "type_name": "관능적인 이끌림",
+      "harmonious_accords": ["Musk", "Amber", "Leather"],
+      "avoid_accords": ["Fresh", "Citrus"]
+    },
+    "Aquatic": {
+      "type_name": "자유로운 파도의 숨결",
+      "harmonious_accords": ["Fresh", "Ozonic", "Marine"],
+      "avoid_accords": ["Oriental", "Gourmand"]
+    },
+    "Chypre": {
+      "type_name": "고전적인 우아함",
+      "harmonious_accords": ["Woody", "Green", "Floral"],
+      "avoid_accords": ["Sweet", "Fruity"]
+    },
+    "Creamy": {
+      "type_name": "부드러운 위로",
+      "harmonious_accords": ["Vanilla", "Musk", "Lactonic"],
+      "avoid_accords": ["Citrus", "Spicy"]
+    },
+    "Earthy": {
+      "type_name": "대지의 안정감",
+      "harmonious_accords": ["Woody", "Green", "Herbal"],
+      "avoid_accords": ["Sweet", "Synthetic"]
+    },
+    "Fruity": {
+      "type_name": "달콤한 생동감",
+      "harmonious_accords": ["Floral", "Citrus", "Sweet"],
+      "avoid_accords": ["Leather", "Smoky"]
+    },
+    "Gourmand": {
+      "type_name": "달콤한 유혹",
+      "harmonious_accords": ["Vanilla", "Chocolate", "Caramel"],
+      "avoid_accords": ["Aquatic", "Fresh"]
+    },
+    "Green": {
+      "type_name": "싱그러운 자연의 조각",
+      "harmonious_accords": ["Fresh", "Floral", "Herbal"],
+      "avoid_accords": ["Oriental", "Animalic"]
+    },
+    "Leather": {
+      "type_name": "성숙한 카리스마",
+      "harmonious_accords": ["Smoky", "Woody", "Spicy"],
+      "avoid_accords": ["Floral", "Fruity"]
+    },
+    "Powdery": {
+      "type_name": "보송한 순수함",
+      "harmonious_accords": ["Musk", "Floral", "Vanilla"],
+      "avoid_accords": ["Animalic", "Spicy"]
+    },
+    "Resinous": {
+      "type_name": "깊이 있는 여운",
+      "harmonious_accords": ["Woody", "Amber", "Oriental"],
+      "avoid_accords": ["Citrus", "Fresh"]
+    },
+    "Smoky": {
+      "type_name": "대담한 존재감",
+      "harmonious_accords": ["Leather", "Woody", "Tobacco"],
+      "avoid_accords": ["Floral", "Sweet"]
+    },
+    "Spicy": {
+      "type_name": "강렬한 스파크",
+      "harmonious_accords": ["Oriental", "Woody", "Amber"],
+      "avoid_accords": ["Aquatic", "Fresh"]
+    },
+    "Sweet": {
+      "type_name": "친근한 온기",
+      "harmonious_accords": ["Fruity", "Vanilla", "Gourmand"],
+      "avoid_accords": ["Leather", "Smoky"]
+    },
+    "Synthetic": {
+      "type_name": "현대적인 세련미",
+      "harmonious_accords": ["Ozonic", "Fresh", "Aldehydic"],
+      "avoid_accords": ["Earthy", "Natural"]
+    }
+  },
+  "default_type": {
+    "type_name": "독특한 탐험가",
+    "harmonious_accords": ["Musk", "Woody", "Citrus"],
+    "avoid_accords": ["Animalic", "Leather"]
+  },
+  "mbti_accord_affinity": {
+    "ISTJ": { "preferred_accords": ["Woody", "Cotton", "Amber"] },
+    "ISFJ": { "preferred_accords": ["Musk", "Cotton", "Vanilla"] },
+    "INFJ": { "preferred_accords": ["Woody", "Amber", "Resinous"] },
+    "INTJ": { "preferred_accords": ["Woody", "Leather", "Aromatic"] },
+    "ISTP": { "preferred_accords": ["Leather", "Woody", "Spicy"] },
+    "ISFP": { "preferred_accords": ["Floral", "Musk", "Fruity"] },
+    "INFP": { "preferred_accords": ["Floral", "Musk", "Powdery"] },
+    "INTP": { "preferred_accords": ["Aromatic", "Woody", "Ozonic"] },
+    "ESTP": { "preferred_accords": ["Citrus", "Spicy", "Fresh"] },
+    "ESFP": { "preferred_accords": ["Fruity", "Floral", "Citrus"] },
+    "ENFP": { "preferred_accords": ["Citrus", "Floral", "Fresh"] },
+    "ENTP": { "preferred_accords": ["Aromatic", "Citrus", "Spicy"] },
+    "ESTJ": { "preferred_accords": ["Woody", "Citrus", "Aromatic"] },
+    "ESFJ": { "preferred_accords": ["Floral", "Musk", "Cotton"] },
+    "ENFJ": { "preferred_accords": ["Floral", "Woody", "Amber"] },
+    "ENTJ": { "preferred_accords": ["Woody", "Amber", "Spicy"] }
+  }
+}

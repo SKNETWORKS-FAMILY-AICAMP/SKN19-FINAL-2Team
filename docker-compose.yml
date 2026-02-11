@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # [1] 백엔드 (FastAPI) - 기존 유지
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: scentence-backend
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    env_file: .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - ADMIN_EMAILS=${ADMIN_EMAILS}
+      - INTERNAL_REQUEST_SECRET=${INTERNAL_REQUEST_SECRET}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # [2] 프론트엔드 (Next.js) - 기존 유지
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scentence-frontend
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app # [핵심 1] 내 컴퓨터 코드를 컨테이너와 연결
+      - /app/node_modules # [핵심 2] 컨테이너 내부의 라이브러리 보호
+      - /app/.next # [핵심 3] 빌드 캐시 충돌 방지
+    env_file: .env
+    environment:
+      - BACKEND_INTERNAL_URL=${BACKEND_INTERNAL_URL:-http://backend:8000}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_ADMIN_EMAILS=${NEXT_PUBLIC_ADMIN_EMAILS}
+      - LAYERING_API_URL=${LAYERING_API_URL:-http://layering:8002}
+      - SCENTMAP_INTERNAL_URL=${SCENTMAP_INTERNAL_URL:-http://scentmap:8001}
+      - INTERNAL_REQUEST_SECRET=${INTERNAL_REQUEST_SECRET}
+      - WATCHPACK_POLLING=true
+      - NEXT_PUBLIC_ENABLE_AUTH=true
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - AUTH_TRUST_HOST=true
+    depends_on:
+      - backend
+    # [추가 2] 개발 모드로 강제 실행 (Dockerfile 설정 무시)
+    command: npm run dev -- --turbopack
+    # [추가 3] build 모드로 실행 (배포전 검수용)
+    # command: sh -c "npm run build && npm start"
+    # [3] Scentmap 서비스 - 대폭 수정
+  scentmap:
+    build:
+      context: .
+      dockerfile: ./scentmap/Dockerfile
+    container_name: scentmap-service
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./scentmap:/app/scentmap
+    environment:
+      - PYTHONUNBUFFERED=1
+      # [수정] 'db'라는 이름 대신 .env의 DB_HOST(host.docker.internal)를 사용하도록 변경
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      # [수정] 하드코딩된 'db:5432'를 변수로 교체하여 로컬 DB 접속 유도
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/scentence_db
+      - PERFUME_DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/perfume_db
+      - RECOM_DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/recom_db
+      - MEMBER_DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/member_db
+    # [삭제] 현재 파일에 없는 db 및 data-init 서비스 의존성 제거
+    # [추가] scentmap 컨테이너도 외부 DB 주소를 알 수 있게 함
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn scentmap.main:app --host 0.0.0.0 --port 8001 --reload
+    env_file:
+      - .env
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  layering:
+    build:
+      context: ./layering
+      dockerfile: Dockerfile
+    container_name: scentence-layering
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./layering:/app
+      - ../scentence-db-init/postgres/RDB/scripts/perfume_db:/app/perfume_db
+    env_file: .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - LAYERING_DB_ROOT=/app/perfume_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+
+volumes:
+  pgdata:
+    name: pgdata

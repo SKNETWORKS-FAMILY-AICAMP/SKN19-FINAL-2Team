@@ -1,0 +1,191 @@
+{
+  "seasons": [
+    {
+      "id": "series-1",
+      "title": "향수 입문 클래스",
+      "description": "향의 기본을 차근차근 익히는 첫 연재",
+      "series": [
+        {
+          "id": "series-1-1",
+          "title": "향수 입문 클래스",
+          "summary": "향의 기본을 차근차근 익히는 첫 연재",
+          "thumbnail": "/perfumes/perfume_wiki_default.png",
+          "episodes": [
+            {
+              "id": "episode-1",
+              "tag": "입문",
+              "title": "향이 변하는 이야기",
+              "summary": "처음 만난 향이 하루 끝까지 어떻게 달라지는지",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-2",
+              "tag": "입문",
+              "title": "향의 지속과 퍼짐",
+              "summary": "향이 머무는 시간과 공간의 차이",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-3",
+              "tag": "입문",
+              "title": "향수의 진하기 레벨",
+              "summary": "강도와 무드가 달라지는 농도 이야기",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "series-2",
+      "title": "향의 성격 탐구",
+      "description": "계열별로 향의 성격을 탐색하는 시리즈",
+      "series": [
+        {
+          "id": "series-2-1",
+          "title": "향의 성격 탐구",
+          "summary": "계열별로 향의 성격을 탐색하는 시리즈",
+          "thumbnail": "/perfumes/perfume_wiki_default.png",
+          "episodes": [
+            {
+              "id": "episode-1",
+              "tag": "시트러스",
+              "title": "시트러스, 햇살처럼 상쾌한 향의 시작",
+              "summary": "밝고 경쾌한 향을 여는 노트",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-2",
+              "tag": "프레시",
+              "title": "프레시/아쿠아틱, 깨끗함을 담은 투명한 향",
+              "summary": "물결처럼 산뜻한 향의 인상",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-3",
+              "tag": "플로럴",
+              "title": "플로럴, 향수의 중심이 되는 꽃의 세계",
+              "summary": "꽃향이 만드는 균형감",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-4",
+              "tag": "우디",
+              "title": "우디, 숲속에 들어온 듯한 깊은 향",
+              "summary": "잔향을 길게 만드는 깊이",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-5",
+              "tag": "구르망",
+              "title": "스위트/구르망, 디저트처럼 중독적인 향",
+              "summary": "달콤함으로 기억되는 향",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "series-3",
+      "title": "향을 잘 쓰는 사람들의 비밀",
+      "description": "향을 잘 활용하는 노하우 모음",
+      "series": [
+        {
+          "id": "series-3-1",
+          "title": "향을 잘 쓰는 사람들의 비밀",
+          "summary": "향을 잘 활용하는 노하우 모음",
+          "thumbnail": "/perfumes/perfume_wiki_default.png",
+          "episodes": [
+            {
+              "id": "episode-1",
+              "tag": "활용",
+              "title": "향이 살아나는 위치",
+              "summary": "위치에 따라 달라지는 향의 분위기",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-2",
+              "tag": "활용",
+              "title": "과하지 않게 오래 남기는 방법",
+              "summary": "레이어링과 보습의 역할",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-3",
+              "tag": "조합",
+              "title": "나만의 향을 만드는 조합의 재미",
+              "summary": "레이어링으로 개성을 만드는 법",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "series-4",
+      "title": "향 관리 교실",
+      "description": "향을 오래 지키는 관리 습관",
+      "series": [
+        {
+          "id": "series-4-1",
+          "title": "향 관리 교실",
+          "summary": "향을 오래 지키는 관리 습관",
+          "thumbnail": "/perfumes/perfume_wiki_default.png",
+          "episodes": [
+            {
+              "id": "episode-1",
+              "tag": "관리",
+              "title": "향이 변해버리는 순간들",
+              "summary": "온도, 빛, 공기의 영향",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            },
+            {
+              "id": "episode-2",
+              "tag": "관리",
+              "title": "향을 오래 지키는 작은 습관",
+              "summary": "보관 위치와 사용 루틴",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "series-5",
+      "title": "계절과 향의 관계",
+      "description": "계절에 맞는 향을 고르는 기준",
+      "series": [
+        {
+          "id": "series-5-1",
+          "title": "계절과 향의 관계",
+          "summary": "계절에 맞는 향을 고르는 기준",
+          "thumbnail": "/perfumes/perfume_wiki_default.png",
+          "episodes": [
+            {
+              "id": "episode-1",
+              "tag": "계절",
+              "title": "날씨가 향의 분위기를 바꾸는 순간들",
+              "summary": "온도 변화에 따라 달라지는 향",
+              "date": "2026.01.26",
+              "thumbnail": "/perfumes/perfume_wiki_default.png"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

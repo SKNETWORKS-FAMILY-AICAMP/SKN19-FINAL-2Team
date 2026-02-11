@@ -1,0 +1,14 @@
+{
+  "typeCheckingMode": "off",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportDeprecated": "none",
+  "reportCallIssue": "none",
+  "reportArgumentType": "none",
+  "reportCallInDefaultInitializer": "none",
+  "reportUntypedFunctionDecorator": "none"
+}

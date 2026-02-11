@@ -1,0 +1,785 @@
+[
+  {
+    "mbti": "ISTJ",
+    "headline": "책임감과 신뢰를 조용히 쌓아가는 ISTJ의 성향은, 겉으로 튀지 않지만 가까이 있을수록 또렷하게 느껴지는 깨끗한 우디 향을 닮았다.",
+    "persona": {
+      "space": "오래된 도서관의 침묵",
+      "moment": "정밀하게 태엽이 감기는 순간",
+      "sensation": "빳빳하게 다려진 셔츠의 질감",
+      "keywords": ["정갈한", "단단한", "흐트러짐 없는", "묵직한", "이성적인"]
+    },
+    "images": {
+      "space": "/images/mbti/istj_space.jpg",
+      "moment": "/images/mbti/istj_moment.jpg",
+      "sensation": "/images/mbti/istj_sensation.jpg"
+    },
+    "intro": "이 향은 조용하지만 정직하게 존재한다. 시간이 지나도 변하지 않는 안정감.",
+    "core_traits": {
+      "presence": "피부에 밀착되어 가까운 사람에게만 은은하게 전달",
+      "texture": "샤프하고 구조적, 깨끗한 느낌",
+      "perception": "실제 원료가 명확하게 느껴지는 현실적 향",
+      "consistency": "정석적이고 실패 없는 안정된 방향성"
+    },
+    "strengths": [
+      "어떤 상황에서도 신뢰감을 줌",
+      "깨끗하고 단정한 인상",
+      "시간이 지나도 일관된 향",
+      "과하지 않아 거부감이 없음"
+    ],
+    "weaknesses": [
+      "첫인상이 조용해 존재감이 약할 수 있음",
+      "변화나 반전이 없어 단조롭게 느껴질 수 있음",
+      "감성적 자극이 부족해 밋밋할 수 있음"
+    ],
+    "scent_preferences": {
+      "likes": ["시더우드", "베티버", "화이트 머스크", "클린 앰버", "아이리스"],
+      "avoids": ["헤비한 플로럴", "투베로즈", "과도한 스파이스", "스모키 레더"]
+    },
+    "impression": "\"믿을 수 있는 사람 냄새\", 가까이 있을수록 안정감을 주는 향",
+    "situations": {
+      "daily": "깔끔한 출근길, 업무 미팅",
+      "formal": "차분한 고급스러움으로 신뢰 구축",
+      "private": "은은하게 남아 있는 잔향으로 깊은 인상"
+    },
+    "growth": {
+      "partner_mbti": "ENFP",
+      "change": "정석적 구조에 몽환적 감성이 더해져 입체감 획득",
+      "result": "단정함 속에 부드러운 감성이 스며든 예상 밖의 매력 발현"
+    }
+  },
+  {
+    "mbti": "ISFJ",
+    "headline": "말보다 행동으로 다정을 전하는 보호자형인 ISFJ의 성향은, 피부에 남아 포근하게 감싸는 머스크 향을 닮았다.",
+    "persona": {
+      "space": "볕이 잘 드는 아늑한 거실",
+      "moment": "정성껏 우려낸 찻잔의 온기",
+      "sensation": "잘 마른 리넨의 보드라운 감촉",
+      "keywords": ["포근한", "세심한", "은은하게 스며드는", "사려 깊은", "깨끗한"]
+    },
+    "images": {
+      "space": "/images/mbti/isfj_space.jpg",
+      "moment": "/images/mbti/isfj_moment.jpg",
+      "sensation": "/images/mbti/isfj_sensation.jpg"
+    },
+    "intro": "이 향은 조용히 퍼지지만 오래 기억에 남는다. 편안함과 신뢰감의 조합.",
+    "core_traits": {
+      "presence": "즉각적이지 않지만 피부에 남아 여운 형성",
+      "texture": "부드럽고 포근한 질감",
+      "perception": "실제 촉감처럼 느껴지는 현실적 향",
+      "consistency": "안정적이고 실패 없는 정석 방향"
+    },
+    "strengths": [
+      "따뜻하고 편안한 분위기",
+      "부드럽게 감싸는 느낌",
+      "어디서나 무난하게 어울림",
+      "가까워질수록 호감도 상승"
+    ],
+    "weaknesses": [
+      "존재감이 약하다고 느껴질 수 있음",
+      "강한 개성을 원하는 사람에겐 심심함",
+      "첫인상에서 묻힐 수 있음"
+    ],
+    "scent_preferences": {
+      "likes": ["화이트 머스크", "캐시미어 우드", "소프트 앰버", "바닐라", "코튼"],
+      "avoids": ["날카로운 시트러스", "스파이시 노트", "헤비한 우드", "그린 계열"]
+    },
+    "impression": "\"좋은 사람 냄새\", 오래 함께 있고 싶어지는 향",
+    "situations": {
+      "daily": "자연스럽게 어울리는 데일리 향",
+      "formal": "은은한 고급스러움으로 신뢰 형성",
+      "private": "가까운 거리에서 더욱 따뜻하게 느껴짐"
+    },
+    "growth": {
+      "partner_mbti": "ENTP",
+      "partner_code": "PTNX",
+      "change": "안정된 포근함에 예측 불가한 개성이 더해짐",
+      "result": "따뜻함 속에 흥미로운 반전이 숨어 있는 입체적 매력"
+    }
+  },
+  {
+    "mbti": "INFJ",
+    "headline": "깊은 내면으로 사람을 끌어당기는 이상주의자인 INFJ의 성향은, 은은하게 퍼지며 분위기를 바꾸는 신비로운 무드향을 닮았다.",
+    "persona": {
+      "space": "안개 낀 새벽의 호숫가",
+      "moment": "깊은 밤 홀로 켜둔 촛불의 일렁임",
+      "sensation": "심연으로 가라앉는 고요한 파동",
+      "keywords": ["신비로운", "깊이 있는", "고요한", "영적인", "서늘한"]
+    },
+    "images": {
+      "space": "/images/mbti/infj_space.jpg",
+      "moment": "/images/mbti/infj_moment.jpg",
+      "sensation": "/images/mbti/infj_sensation.jpg"
+    },
+    "intro": "이 향은 말없이 공간의 무드를 바꾼다. 깊이감 있는 존재.",
+    "core_traits": {
+      "presence": "조용하지만 점차 공간에 스며듦",
+      "texture": "부드럽고 감싸는 질감",
+      "perception": "추상적 이미지와 분위기로 느껴지는 향",
+      "consistency": "정석적이면서도 깊이 있는 안정감"
+    },
+    "strengths": [
+      "신비롭고 깊이 있는 분위기",
+      "은은하지만 강한 인상",
+      "감성적으로 연결되는 느낌",
+      "시간이 지날수록 매력 증가"
+    ],
+    "weaknesses": [
+      "첫 만남에선 과소평가될 수 있음",
+      "너무 추상적이어서 호불호 있음",
+      "명확함을 원하는 사람에겐 모호함"
+    ],
+    "scent_preferences": {
+      "likes": ["인센스", "파촐리", "미스틱 우드", "아이리스", "앰버그리스"],
+      "avoids": ["밝은 시트러스", "과도한 플로럴", "스트레이트한 프루티"]
+    },
+    "impression": "\"뭔가 특별한 사람 냄새\", 깊이를 가진 신비로운 향",
+    "situations": {
+      "daily": "조용한 카페, 창작 활동",
+      "formal": "우아하면서도 깊이 있는 인상",
+      "private": "친밀한 순간에 더욱 강렬하게 느껴짐"
+    },
+    "growth": {
+      "partner_mbti": "ESTP",
+      "partner_code": "PTSX",
+      "change": "신비로운 깊이에 순간의 생동감이 더해짐",
+      "result": "철학적 무드 속에 스파크가 튀는 역동적 조합"
+    }
+  },
+  {
+    "mbti": "INTJ",
+    "headline": "감정보다 논리로 세상을 설계하는 전략가인 INTJ의 성향은, 차분하지만 힘 있는 앰버 우디 향을 닮았다.",
+    "persona": {
+      "space": "차가운 대리석 위의 건축물",
+      "moment": "체스판 위 마지막 수를 두는 찰나",
+      "sensation": "날카롭게 벼려진 금속의 서늘함",
+      "keywords": ["날카로운", "세련된", "선명한", "흔들림 없는", "지적인"]
+    },
+    "images": {
+      "space": "/images/mbti/intj_space.jpg",
+      "moment": "/images/mbti/intj_moment.jpg",
+      "sensation": "/images/mbti/intj_sensation.jpg"
+    },
+    "intro": "이 향은 조용하지만 확고하다. 무게감 있는 존재.",
+    "core_traits": {
+      "presence": "밀착되어 개인에게 집중된 힘",
+      "texture": "샤프하고 드라이한 구조감",
+      "perception": "추상적이고 개념적으로 다가오는 향",
+      "consistency": "정석적이고 완성도 높은 방향성"
+    },
+    "strengths": [
+      "지적이고 세련된 인상",
+      "무게감 있는 존재감",
+      "시간이 지나도 흐트러짐 없음",
+      "자신감 있는 분위기"
+    ],
+    "weaknesses": [
+      "차갑게 느껴질 수 있음",
+      "따뜻함이나 친근감 부족",
+      "접근하기 어려운 인상"
+    ],
+    "scent_preferences": {
+      "likes": ["드라이 앰버", "시더우드", "사이프러스", "가죽", "베티버"],
+      "avoids": ["달콤한 바닐라", "파우더리", "플로럴", "프루티"]
+    },
+    "impression": "\"능력 있는 사람 냄새\", 존중받는 향",
+    "situations": {
+      "daily": "집중이 필요한 업무",
+      "formal": "권위 있는 자리에서 빛나는 향",
+      "private": "신중하게 선택된 순간에만 공개"
+    },
+    "growth": {
+      "partner_mbti": "ESFP",
+      "partner_code": "PCSX",
+      "change": "차가운 구조에 따뜻한 활력이 더해짐",
+      "result": "완벽한 설계 속에 인간적 온기가 스며든 균형"
+    }
+  },
+  {
+    "mbti": "ISTP",
+    "headline": "조용하지만 즉각 반응하는 현실 해결사인 ISTP의 성향은, 밀착된 향 속에 날카로운 한 줄기가 숨어 있는 레더 향을 닮았다.",
+    "persona": {
+      "space": "비 갠 뒤의 서늘한 돌담길",
+      "moment": "무심하게 깎아낸 나무 조각의 결",
+      "sensation": "정제된 엔진 오일의 매끄러운 향",
+      "keywords": ["담백한", "무심한", "시원한", "정제된", "실용적인"]
+    },
+    "images": {
+      "space": "/images/mbti/istp_space.jpg",
+      "moment": "/images/mbti/istp_moment.jpg",
+      "sensation": "/images/mbti/istp_sensation.jpg"
+    },
+    "intro": "이 향은 조용하지만 예리하다. 필요한 순간 강렬하게 각인.",
+    "core_traits": {
+      "presence": "은은하지만 피부에 강하게 남음",
+      "texture": "샤프하고 날카로운 느낌",
+      "perception": "원료가 직접적으로 느껴지는 현실적 향",
+      "consistency": "예측 불가하고 개성적인 방향"
+    },
+    "strengths": [
+      "강렬한 개성",
+      "호불호 확실하지만 기억에 남음",
+      "즉각적인 카리스마",
+      "독립적인 분위기"
+    ],
+    "weaknesses": [
+      "날카로워서 거부감 줄 수 있음",
+      "따뜻함이나 친근감 부족",
+      "상황에 따라 과할 수 있음"
+    ],
+    "scent_preferences": {
+      "likes": ["레더", "담배", "메탈릭 노트", "진저", "후추"],
+      "avoids": ["플로럴", "달콤한 노트", "파우더리", "바닐라"]
+    },
+    "impression": "\"쿨한 사람 냄새\", 거리감 있지만 끌리는 향",
+    "situations": {
+      "daily": "자신만의 스타일 표현",
+      "formal": "독특한 인상으로 차별화",
+      "private": "선택된 사람에게만 보이는 날것의 매력"
+    },
+    "growth": {
+      "partner_mbti": "ENFJ",
+      "partner_code": "PNCB",
+      "change": "날카로운 개성에 따뜻한 포용력이 더해짐",
+      "result": "쿨함 속에 의외의 다정함이 발견되는 반전 매력"
+    }
+  },
+  {
+    "mbti": "ISFP",
+    "headline": "따뜻하지만 자신만의 감각을 지닌 자유로운 예술가인 ISFP의 성향은, 부드러운 머스크에 달콤함이 스친 향을 닮았다.",
+    "persona": {
+      "space": "꽃비가 내리는 숲속 오두막",
+      "moment": "캔버스 위 물감이 번져가는 찰나",
+      "sensation": "유연하게 흐르는 선율",
+      "keywords": ["유연한", "감각적인", "다채로운", "편안한", "서정적인"]
+    },
+    "images": {
+      "space": "/images/mbti/isfp_space.jpg",
+      "moment": "/images/mbti/isfp_moment.jpg",
+      "sensation": "/images/mbti/isfp_sensation.jpg"
+    },
+    "intro": "이 향은 부드럽지만 자신만의 색을 가진다. 독특한 온기.",
+    "core_traits": {
+      "presence": "가까이서만 느껴지는 친밀한 향",
+      "texture": "부드럽고 포근한 질감",
+      "perception": "실제 감각으로 와닿는 현실적 향",
+      "consistency": "틀을 벗어난 자유로운 개성"
+    },
+    "strengths": [
+      "따뜻하고 친근한 느낌",
+      "독특하지만 거부감 없음",
+      "감성적으로 연결됨",
+      "예술적 감각"
+    ],
+    "weaknesses": [
+      "명확한 방향성 부족",
+      "일관성 없다고 느껴질 수 있음",
+      "존재감이 약할 수 있음"
+    ],
+    "scent_preferences": {
+      "likes": ["피치", "피오니", "화이트 머스크", "헬리오트로프", "라즈베리"],
+      "avoids": ["차가운 미네랄", "헤비한 우드", "스모키 노트"]
+    },
+    "impression": "\"따뜻한 예술가 냄새\", 친근하지만 특별한 향",
+    "situations": {
+      "daily": "일상 속 작은 행복 표현",
+      "formal": "자연스러운 매력으로 호감 형성",
+      "private": "친밀한 거리에서 더욱 달콤하게 느껴짐"
+    },
+    "growth": {
+      "partner_mbti": "ENTJ",
+      "partner_code": "PTNB",
+      "change": "부드러운 감성에 확고한 방향성이 더해짐",
+      "result": "예술성과 추진력이 만난 완성도 높은 개성"
+    }
+  },
+  {
+    "mbti": "INFP",
+    "headline": "감정과 이상을 조용히 퍼뜨리는 낭만가인 INFP의 성향은, 공기처럼 감싸는 몽환적 무드향을 닮았다.",
+    "persona": {
+      "space": "비밀스러운 정원의 달빛",
+      "moment": "오래된 책장 사이 말려둔 꽃잎",
+      "sensation": "꿈결처럼 일렁이는 보랏빛 안개",
+      "keywords": ["내밀한", "부드러운", "몽환적인", "온기 있는", "순수한"]
+    },
+    "images": {
+      "space": "/images/mbti/infp_space.jpg",
+      "moment": "/images/mbti/infp_moment.jpg",
+      "sensation": "/images/mbti/infp_sensation.jpg"
+    },
+    "intro": "이 향은 꿈처럼 퍼진다. 현실과 이상 사이의 존재.",
+    "core_traits": {
+      "presence": "조용히 스며들어 분위기를 바꿈",
+      "texture": "부드럽고 몽환적인 질감",
+      "perception": "추상적 이미지와 감정으로 느껴지는 향",
+      "consistency": "예측 불가하고 독특한 방향성"
+    },
+    "strengths": [
+      "몽환적이고 낭만적인 분위기",
+      "깊은 감성적 울림",
+      "독특하고 기억에 남음",
+      "상상력을 자극함"
+    ],
+    "weaknesses": [
+      "너무 추상적이어서 이해하기 어려움",
+      "현실감 부족",
+      "호불호가 극명하게 갈림"
+    ],
+    "scent_preferences": {
+      "likes": ["헬리오트로프", "아이리스", "화이트 티", "미모사", "앰버그리스"],
+      "avoids": ["강한 스파이스", "헤비한 레더", "명확한 프루티"]
+    },
+    "impression": "\"감성적인 예술가 냄새\", 독특한 세계관을 가진 향",
+    "situations": {
+      "daily": "창작 활동, 혼자만의 시간",
+      "formal": "예술적 감각으로 차별화",
+      "private": "깊은 대화를 나누는 순간"
+    },
+    "growth": {
+      "partner_mbti": "ESTJ",
+      "partner_code": "PTSB",
+      "change": "몽환적 감성에 명확한 구조가 더해짐",
+      "result": "이상이 현실로 구현되는 완성형 조화"
+    }
+  },
+  {
+    "mbti": "INTP",
+    "headline": "현실보다 아이디어로 세상을 해석하는 사색가인 INTP의 성향은, 차갑고 추상적인 미네랄 향을 닮았다.",
+    "persona": {
+      "space": "미지의 행성, 푸른 불꽃의 방",
+      "moment": "흩어진 단서가 하나로 꿰어지는 순간",
+      "sensation": "낯설고 예리한 영감의 스파크",
+      "keywords": ["독창적인", "낯선", "긴장감 있는", "분석적인", "예리한"]
+    },
+    "images": {
+      "space": "/images/mbti/intp_space.jpg",
+      "moment": "/images/mbti/intp_moment.jpg",
+      "sensation": "/images/mbti/intp_sensation.jpg"
+    },
+    "intro": "이 향은 차갑고 명료하다. 개념적 존재.",
+    "core_traits": {
+      "presence": "은은하게 남아 사유를 자극",
+      "texture": "샤프하고 차가운 느낌",
+      "perception": "추상적이고 개념적으로 다가오는 향",
+      "consistency": "독특하고 예측 불가한 개성"
+    },
+    "strengths": [
+      "지적이고 독특한 인상",
+      "차별화된 개성",
+      "호기심을 자극함",
+      "실험적이고 혁신적"
+    ],
+    "weaknesses": [
+      "차갑고 접근하기 어려움",
+      "감성적 연결 부족",
+      "이해하기 어렵다는 평"
+    ],
+    "scent_preferences": {
+      "likes": ["미네랄", "오존", "알데하이드", "진", "메탈릭 노트"],
+      "avoids": ["달콤한 노트", "플로럴", "따뜻한 앰버", "바닐라"]
+    },
+    "impression": "\"독특한 사색가 냄새\", 호기심을 불러일으키는 향",
+    "situations": {
+      "daily": "집중력이 필요한 작업",
+      "formal": "차별화된 개성으로 인상 남김",
+      "private": "같은 주파수를 가진 사람에게만 이해됨"
+    },
+    "growth": {
+      "partner_mbti": "ESFJ",
+      "partner_code": "PCSB",
+      "change": "차가운 논리에 따뜻한 감성이 더해짐",
+      "result": "지적 명료함 속에 인간적 온기가 스며든 균형"
+    }
+  },
+  {
+    "mbti": "ESTJ",
+    "headline": "질서와 효율로 분위기를 주도하는 리더인 ESTJ의 성향은, 공간을 단숨에 정리하는 클린 우디 향을 닮았다.",
+    "persona": {
+      "space": "완벽한 대칭의 유리 빌딩",
+      "moment": "정상을 향해 직선으로 긋는 획",
+      "sensation": "압도적이고 단단한 질서의 무게",
+      "keywords": ["단정한", "압도적인", "체계적인", "힘 있는", "확신에 찬"]
+    },
+    "images": {
+      "space": "/images/mbti/estj_space.jpg",
+      "moment": "/images/mbti/estj_moment.jpg",
+      "sensation": "/images/mbti/estj_sensation.jpg"
+    },
+    "intro": "이 향은 즉각적으로 공간을 장악한다. 명확하고 단호한 존재.",
+    "core_traits": {
+      "presence": "뿌리자마자 공간으로 확산",
+      "texture": "샤프하고 깨끗한 느낌",
+      "perception": "명확한 원료감이 느껴지는 현실적 향",
+      "consistency": "정석적이고 완벽한 안정감"
+    },
+    "strengths": [
+      "강력한 첫인상",
+      "깔끔하고 전문적인 분위기",
+      "신뢰감과 리더십",
+      "어디서나 적합함"
+    ],
+    "weaknesses": [
+      "경직되고 딱딱하다는 인상",
+      "감성적 여유 부족",
+      "변화나 유연성 부족"
+    ],
+    "scent_preferences": {
+      "likes": ["시더우드", "베티버", "화이트 머스크", "그린 노트", "유칼립투스"],
+      "avoids": ["헤비한 플로럴", "달콤한 구르망", "스모키 노트"]
+    },
+    "impression": "\"신뢰할 수 있는 리더 냄새\", 전문가적 향",
+    "situations": {
+      "daily": "업무 환경에서 최적",
+      "formal": "권위와 신뢰를 동시에 전달",
+      "private": "일관된 인상으로 안정감 제공"
+    },
+    "growth": {
+      "partner_mbti": "INFP",
+      "partner_code": "INCX",
+      "change": "명확한 구조에 몽환적 감성이 더해짐",
+      "result": "효율성 속에 예상치 못한 낭만이 피어나는 입체감"
+    }
+  },
+  {
+    "mbti": "ESFJ",
+    "headline": "주변을 밝히며 사람들을 편안하게 만드는 조화자인 ESFJ의 성향은, 화사하게 퍼지는 플로럴 파우더 향을 닮았다.",
+    "persona": {
+      "space": "갓 구운 빵의 온기가 가득한 집",
+      "moment": "모두가 모인 저녁 식탁의 환대",
+      "sensation": "마음을 녹이는 보드라운 온기",
+      "keywords": ["조화로운", "달콤한", "환대하는", "보드라운", "협력적인"]
+    },
+    "images": {
+      "space": "/images/mbti/esfj_space.jpg",
+      "moment": "/images/mbti/esfj_moment.jpg",
+      "sensation": "/images/mbti/esfj_sensation.jpg"
+    },
+    "intro": "이 향은 따뜻하게 공간을 감싼다. 친근하고 포근한 존재.",
+    "core_traits": {
+      "presence": "즉각적으로 화사하게 퍼짐",
+      "texture": "부드럽고 포근한 질감",
+      "perception": "명확한 꽃 향기가 느껴지는 현실적 향",
+      "consistency": "안정적이고 무난한 정석"
+    },
+    "strengths": [
+      "따뜻하고 친근한 첫인상",
+      "편안함을 주는 분위기",
+      "호감도 높음",
+      "모두에게 사랑받는 향"
+    ],
+    "weaknesses": [
+      "개성이 약하다는 평",
+      "평범하고 특색 없음",
+      "기억에 남기 어려움"
+    ],
+    "scent_preferences": {
+      "likes": ["피오니", "로즈", "머스크", "코튼", "바닐라"],
+      "avoids": ["스파이시", "레더", "스모키", "실험적 노트"]
+    },
+    "impression": "\"좋은 사람 냄새\", 누구에게나 호감을 주는 향",
+    "situations": {
+      "daily": "일상 속 자연스러운 매력",
+      "formal": "부드러운 카리스마로 사람 모음",
+      "private": "따뜻한 신뢰 형성"
+    },
+    "growth": {
+      "partner_mbti": "INTP",
+      "partner_code": "ITNX",
+      "change": "포근함에 지적이고 독특한 개성이 더해짐",
+      "result": "친근함 속에 예상치 못한 깊이가 발견되는 반전"
+    }
+  },
+  {
+    "mbti": "ENFJ",
+    "headline": "사람들을 하나로 묶는 카리스마 리더인 ENFJ의 성향은, 따뜻하게 확산되는 우아한 무드 플로럴 향을 닮았다.",
+    "persona": {
+      "space": "세상을 비추는 아침 햇살",
+      "moment": "마음을 움직이는 선한 울림의 파장",
+      "sensation": "온화하게 퍼지는 영향력의 향기",
+      "keywords": ["온화한", "이끄는", "풍부한", "진심 어린", "이타적인"]
+    },
+    "images": {
+      "space": "/images/mbti/enfj_space.jpg",
+      "moment": "/images/mbti/enfj_moment.jpg",
+      "sensation": "/images/mbti/enfj_sensation.jpg"
+    },
+    "intro": "이 향은 공간 전체를 감싸며 분위기를 만든다. 카리스마 있는 포용.",
+    "core_traits": {
+      "presence": "강하게 퍼지며 공간 장악",
+      "texture": "부드럽고 우아한 질감",
+      "perception": "분위기와 이미지로 느껴지는 향",
+      "consistency": "정석적이면서도 세련된 방향성"
+    },
+    "strengths": [
+      "강력한 카리스마",
+      "우아하고 품격 있는 인상",
+      "영향력 있는 존재감",
+      "사람들을 끌어당김"
+    ],
+    "weaknesses": [
+      "과할 수 있는 존재감",
+      "부담스럽다는 평",
+      "개인적 친밀감 부족"
+    ],
+    "scent_preferences": {
+      "likes": ["재스민", "일랑일랑", "샌달우드", "아이리스", "앰버"],
+      "avoids": ["차가운 미네랄", "그린 노트", "과도한 프루티"]
+    },
+    "impression": "\"리더 냄새\", 존경받는 향",
+    "situations": {
+      "daily": "자연스러운 리더십 발휘",
+      "formal": "무대 위에서 빛나는 향",
+      "private": "따뜻한 포용력으로 신뢰 구축"
+    },
+    "growth": {
+      "partner_mbti": "ISTP",
+      "partner_code": "ITSX",
+      "change": "우아한 포용에 날카로운 개성이 더해짐",
+      "result": "부드러움 속에 강렬한 존재감이 숨어 있는 파워풀함"
+    }
+  },
+  {
+    "mbti": "ENTJ",
+    "headline": "목표를 향해 공간을 장악하는 추진형 리더인 ENTJ의 성향은, 강렬하게 퍼지는 앰버 스파이스 향을 닮았다.",
+    "persona": {
+      "space": "만년설이 덮인 정상의 바람",
+      "moment": "대담하게 지도를 그려 나가는 순간",
+      "sensation": "묵직하고 확신에 찬 카리스마",
+      "keywords": ["묵직한", "카리스마 있는", "대담한", "결단력 있는", "고급스러운"]
+    },
+    "images": {
+      "space": "/images/mbti/entj_space.jpg",
+      "moment": "/images/mbti/entj_moment.jpg",
+      "sensation": "/images/mbti/entj_sensation.jpg"
+    },
+    "intro": "이 향은 즉각적으로 공간을 지배한다. 압도적이고 확고한 존재.",
+    "core_traits": {
+      "presence": "강렬하게 공간으로 확산",
+      "texture": "샤프하고 강한 느낌",
+      "perception": "추상적 파워와 분위기로 느껴지는 향",
+      "consistency": "정석적이면서도 완벽한 방향성"
+    },
+    "strengths": [
+      "압도적인 카리스마",
+      "강력한 첫인상",
+      "리더십과 자신감",
+      "기억에 강하게 남음"
+    ],
+    "weaknesses": [
+      "과하게 느껴질 수 있음",
+      "위압적이라는 평",
+      "부드러움이나 친근감 부족"
+    ],
+    "scent_preferences": {
+      "likes": ["앰버", "사프란", "우드", "가죽", "파촐리"],
+      "avoids": ["파우더리", "달콤한 바닐라", "라이트한 플로럴"]
+    },
+    "impression": "\"강력한 리더 냄새\", 존재감 있는 향",
+    "situations": {
+      "daily": "중요한 결정의 순간",
+      "formal": "무대 위에서 압도적 존재감",
+      "private": "신중하게 사용해야 하는 파워"
+    },
+    "growth": {
+      "partner_mbti": "ISFP",
+      "partner_code": "ICSX",
+      "change": "강한 추진력에 부드러운 감성이 더해짐",
+      "result": "파워 속에 예상치 못한 온기가 발견되는 균형"
+    }
+  },
+  {
+    "mbti": "ESTP",
+    "headline": "순간의 에너지로 분위기를 바꾸는 행동가인 ESTP의 성향은, 터지듯 퍼지는 시트러스 스파이스 향을 닮았다.",
+    "persona": {
+      "space": "한여름 태양의 파동",
+      "moment": "탄산수가 터지는 짜릿한 순간",
+      "sensation": "아스팔트 위를 스치는 뜨거운 바람",
+      "keywords": ["역동적인", "강렬한", "직관적인", "에너제틱한", "선명한"]
+    },
+    "images": {
+      "space": "/images/mbti/estp_space.jpg",
+      "moment": "/images/mbti/estp_moment.jpg",
+      "sensation": "/images/mbti/estp_sensation.jpg"
+    },
+    "intro": "이 향은 즉각적으로 에너지를 발산한다. 스파크가 튀는 존재.",
+    "core_traits": {
+      "presence": "폭발적으로 공간에 확산",
+      "texture": "샤프하고 자극적인 느낌",
+      "perception": "명확한 원료감이 즉각 느껴지는 현실적 향",
+      "consistency": "예측 불가하고 개성적인 방향"
+    },
+    "strengths": [
+      "즉각적인 에너지 전달",
+      "생동감 넘치는 분위기",
+      "강렬한 첫인상",
+      "기억에 남는 개성"
+    ],
+    "weaknesses": [
+      "과하게 자극적일 수 있음",
+      "지속성 부족",
+      "호불호가 극명함"
+    ],
+    "scent_preferences": {
+      "likes": ["자몽", "진저", "후추", "베르가못", "카다몬"],
+      "avoids": ["파우더리", "머스크", "부드러운 플로럴"]
+    },
+    "impression": "\"에너지 넘치는 사람 냄새\", 생동감 있는 향",
+    "situations": {
+      "daily": "활동적인 일상, 운동",
+      "formal": "역동적인 인상으로 주목",
+      "private": "짧고 강렬한 순간"
+    },
+    "growth": {
+      "partner_mbti": "INFJ",
+      "partner_code": "INCB",
+      "change": "즉각적 에너지에 깊이 있는 무드가 더해짐",
+      "result": "생동감 속에 철학이 숨어 있는 입체적 매력"
+    }
+  },
+  {
+    "mbti": "ESFP",
+    "headline": "즐거움으로 사람들을 끌어들이는 무드메이커인 ESFP의 성향은, 달콤하고 화사하게 번지는 프루티 향을 닮았다.",
+    "persona": {
+      "space": "샴페인 거품이 가득한 파티장",
+      "moment": "화려하게 터지는 폭죽의 잔상",
+      "sensation": "오감을 깨우는 찬란한 빛의 조각",
+      "keywords": ["화려한", "생기 넘치는", "즐거운", "감각을 깨우는", "친근한"]
+    },
+    "images": {
+      "space": "/images/mbti/esfp_space.jpg",
+      "moment": "/images/mbti/esfp_moment.jpg",
+      "sensation": "/images/mbti/esfp_sensation.jpg"
+    },
+    "intro": "이 향은 즉시 기분을 밝힌다. 즐거움을 나누는 존재.",
+    "core_traits": {
+      "presence": "밝게 퍼지며 공간을 화사하게",
+      "texture": "부드럽고 달콤한 질감",
+      "perception": "실제 과일이 느껴지는 현실적 향",
+      "consistency": "독특하고 개성적인 방향"
+    },
+    "strengths": [
+      "밝고 긍정적인 에너지",
+      "즉각적인 호감",
+      "친근하고 다가가기 쉬움",
+      "활력을 줌"
+    ],
+    "weaknesses": [
+      "가볍다는 인상",
+      "깊이 부족",
+      "어린 느낌"
+    ],
+    "scent_preferences": {
+      "likes": ["피치", "라즈베리", "망고", "바닐라", "코코넛"],
+      "avoids": ["차가운 미네랄", "헤비한 우드", "스모키"]
+    },
+    "impression": "\"즐거운 사람 냄새\", 활기찬 향",
+    "situations": {
+      "daily": "일상 속 기분 전환",
+      "formal": "밝은 에너지로 분위기 메이킹",
+      "private": "즐거운 순간을 더욱 특별하게"
+    },
+    "growth": {
+      "partner_mbti": "INTJ",
+      "partner_code": "ITNB",
+      "change": "밝은 에너지에 깊이와 구조가 더해짐",
+      "result": "즐거움 속에 세련됨이 숨어 있는 완성형"
+    }
+  },
+  {
+    "mbti": "ENFP",
+    "headline": "감정과 상상력으로 세상을 물들이는 영감가인 ENFP의 성향은, 자유롭게 퍼지는 컬러풀 무드향을 닮았다.",
+    "persona": {
+      "space": "무지개가 핀 들판의 산들바람",
+      "moment": "비눗방울이 공중으로 흩어지는 찰나",
+      "sensation": "통통 튀는 도파민의 색채",
+      "keywords": ["통통 튀는", "다정한", "희망찬", "영감을 주는", "긍정적인"]
+    },
+    "images": {
+      "space": "/images/mbti/enfp_space.jpg",
+      "moment": "/images/mbti/enfp_moment.jpg",
+      "sensation": "/images/mbti/enfp_sensation.jpg"
+    },
+    "intro": "이 향은 자유롭게 공간을 채운다. 상상력을 자극하는 존재.",
+    "core_traits": {
+      "presence": "활발하게 공간으로 확산",
+      "texture": "부드럽고 몽환적인 질감",
+      "perception": "추상적 이미지와 감정으로 느껴지는 향",
+      "consistency": "독특하고 예측 불가한 개성"
+    },
+    "strengths": [
+      "창의적이고 독특한 분위기",
+      "영감을 주는 에너지",
+      "밝고 긍정적인 인상",
+      "기억에 강하게 남음"
+    ],
+    "weaknesses": [
+      "산만하다는 인상",
+      "일관성 부족",
+      "이해하기 어렵다는 평"
+    ],
+    "scent_preferences": {
+      "likes": ["네롤리", "피오니", "프리지아", "앰버그리스", "복숭아"],
+      "avoids": ["헤비한 레더", "차가운 미네랄", "단조로운 클린"]
+    },
+    "impression": "\"영감을 주는 사람 냄새\", 창의적인 향",
+    "situations": {
+      "daily": "창작 활동, 새로운 만남",
+      "formal": "독특한 매력으로 주목",
+      "private": "깊은 대화와 상상력 공유"
+    },
+    "growth": {
+      "partner_mbti": "ISTJ",
+      "partner_code": "ITSB",
+      "change": "자유로운 감성에 안정된 구조가 더해짐",
+      "result": "창의성이 체계로 완성되는 균형 잡힌 조화"
+    }
+  },
+  {
+    "mbti": "ENTP",
+    "headline": "아이디어로 판을 흔드는 도전자인 ENTP의 성향은, 예측 불가하게 반전이 튀는 실험적 향을 닮았다.",
+    "persona": {
+      "space": "번뜩이는 아이디어의 실험실",
+      "moment": "고정관념이 깨지는 유쾌한 충격",
+      "sensation": "위트 있게 쨍한 반전의 향조",
+      "keywords": ["위트 있는", "쨍한", "예측 불가능한", "현대적인", "대담한"]
+    },
+    "images": {
+      "space": "/images/mbti/entp_space.jpg",
+      "moment": "/images/mbti/entp_moment.jpg",
+      "sensation": "/images/mbti/entp_sensation.jpg"
+    },
+    "intro": "이 향은 예측을 벗어난다. 끊임없이 변하는 존재.",
+    "core_traits": {
+      "presence": "강하게 퍼지며 주목 끔",
+      "texture": "샤프하고 예리한 느낌",
+      "perception": "추상적이고 개념적으로 다가오는 향",
+      "consistency": "실험적이고 파격적인 개성"
+    },
+    "strengths": [
+      "독창적이고 혁신적",
+      "강렬하게 기억됨",
+      "지적 호기심 자극",
+      "차별화된 개성"
+    ],
+    "weaknesses": [
+      "호불호가 극명함",
+      "이해하기 어려움",
+      "과하다는 평"
+    ],
+    "scent_preferences": {
+      "likes": ["알데하이드", "오존", "핑크페퍼", "카다몬", "진"],
+      "avoids": ["정석 플로럴", "달콤한 바닐라", "머스크"]
+    },
+    "impression": "\"독특한 사람 냄새\", 도전적인 향",
+    "situations": {
+      "daily": "실험과 도전의 순간",
+      "formal": "파격적 인상으로 주목",
+      "private": "같은 주파수를 가진 사람과의 교감"
+    },
+    "growth": {
+      "partner_mbti": "ISFJ",
+      "partner_code": "ICSB",
+      "change": "실험적 개성에 안정감과 포근함이 더해짐",
+      "result": "도전 속에 따뜻함이 발견되는 인간적 매력"
+    }
+  }
+]
